@@ -42,6 +42,14 @@ Browse and load geospatial data from [STAC API](https://stacspec.org/) catalogs 
 
 ---
 
-## 📝 License
+## � Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Technical guide
+- [TESTING.md](TESTING.md) - Network testing
+
+---
+
+## �📝 License
 
 GNU GPL v3.0 | **Version**: 1.1.2 | **Compatibility**: KADAS Albireo 2.x

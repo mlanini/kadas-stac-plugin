@@ -1,166 +1,330 @@
-# Changelog# Changelog
+# Changelog# Changelog# Changelog
 
 
 
-All notable changes to the KADAS STAC Plugin.All notable changes to the KADAS STAC Plugin.
+All notable changes to the KADAS STAC Plugin.
 
 
 
-------
+---All notable changes to the KADAS STAC Plugin.All notable changes to the KADAS STAC Plugin.
 
 
 
-## [1.1.2] - 2026-01-31## [1.1.2] - 2026-01-31
+## [1.1.2] - 2026-01-31
 
 
 
-### KADAS Albireo 2 Optimization### KADAS Albireo 2 Optimization
+### Added------
 
 
+
+- **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` (100% KADAS compatible)
+
+- **Proxy Handler**: Automatic proxy detection from QGIS Settings
+
+- **Auto-docking**: Plugin docks to right panel on startup## [1.1.2] - 2026-01-31## [1.1.2] - 2026-01-31
+
+- **URL Normalization**: Auto-prefix `https://` if missing
+
+- **Referer Header**: KADAS-compatible referer support
+
+- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py)
+
+- **Logging System**: File-based logging with rotation (`~/.kadas/stac.log`)### KADAS Albireo 2 Optimization### KADAS Albireo 2 Optimization
+
+- **22 STAC Catalogs**: Added 15 new verified catalogs (Copernicus, ESA, NASA, etc.)
+
+
+
+### Changed
 
 #### Added#### Added
 
-- **Auto-docking**: Plugin automatically docks to right panel on startup- **Auto-docking**: Plugin automatically docks to right panel on startup
+- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager`
 
-- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)
+- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)- **Auto-docking**: Plugin automatically docks to right panel on startup- **Auto-docking**: Plugin automatically docks to right panel on startup
+
+- **Proxy Configuration**: Reads from QGIS Settings (Settings → Network → Proxy)
+
+- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)
+
+- **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface
 
 - **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` instead of requests library- **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` instead of requests library
 
+### Fixed
+
 - **Proxy Handler**: Automatic proxy detection based on QGIS Settings (swisstopo/topo-rapidmapping pattern)- **Proxy Handler**: Automatic proxy detection based on QGIS Settings (swisstopo/topo-rapidmapping pattern)
 
-- **URL Normalization**: Auto-prefix `https://` if missing from URLs- **URL Normalization**: Auto-prefix `https://` if missing from URLs
+- **AttributeError**: `QgsNetworkReplyContent.url` → using `QNetworkRequest.url()`
 
-- **Referer Header**: KADAS-compatible referer header support (from QGIS Settings)- **Referer Header**: KADAS-compatible referer header support (from QGIS Settings)
+- **AttributeError**: Added `conforms_to()` and `assert_conforms_to()` methods- **URL Normalization**: Auto-prefix `https://` if missing from URLs- **URL Normalization**: Auto-prefix `https://` if missing from URLs
 
-- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py, unittest suite)- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py, unittest suite)
+- **AttributeError**: Added `get_pages()` iterator for STAC API pagination
+
+- **SSL Errors**: No more "SSL module not available" errors- **Referer Header**: KADAS-compatible referer header support (from QGIS Settings)- **Referer Header**: KADAS-compatible referer header support (from QGIS Settings)
+
+- **Protocol Errors**: Better handling with URL normalization
+
+- **Proxy Detection**: Auto-detects VPN and corporate proxy- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py, unittest suite)- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py, unittest suite)
+
+- **VPN Support**: Works with corporate VPNs and SSL inspection
 
 - **Logging System**: File-based logging with rotation (`~/.kadas/stac.log`)
 
+### Technical
+
   - Configurable log levels (STANDARD, DEBUG, ERRORS, WARNING, CRITICAL)#### Changed
 
-  - Automatic stacktrace capture for CRITICAL errors- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager` (100% KADAS compatibility)
+- Network patterns 100% identical to KADAS Albireo 2 catalog providers
 
-  - Log file viewer in Settings tab- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)
+- No external runtime dependencies (pystac/pystac_client bundled)  - Automatic stacktrace capture for CRITICAL errors- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager` (100% KADAS compatibility)
 
-- **Dock Widget Restrictions**: Limited to left/right docking areas only- **Proxy Configuration**: Reads from QGIS Settings GUI (Settings → Network → Proxy)
+- Lazy proxy initialization with global caching
 
-  - Prevents accidental docking to top/bottom panels- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)
-
-  - Auto-docks to right on startup
-
-#### Fixed
-
-#### Changed- **AttributeError**: `QgsNetworkReplyContent` object has no attribute 'url' in qgis_stac_io.py
-
-- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager` (100% KADAS compatibility)  - Now using `request.url().toString()` instead of `reply.url().toString()`
-
-- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)  - Pattern matches KADAS Albireo 2 catalog providers
-
-- **Proxy Configuration**: Reads from QGIS Settings GUI (Settings → Network → Proxy)  - Fixed in both error handling and success logging paths
-
-- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)- **AttributeError**: `QgisStacApiIO` object has no attribute 'conforms_to'
-
-- **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface  - Added `conforms_to()` and `assert_conforms_to()` methods to QgisStacApiIO
-
-  - Methods check API conformance classes (COLLECTIONS, ITEM_SEARCH, FILTER, SORT, FIELDS)
-
-#### Fixed  - Pattern matches pystac_client StacApiIO implementation
-
-- **AttributeError**: `QgsNetworkReplyContent` object has no attribute 'url'- **AttributeError**: `QgisStacApiIO` object has no attribute 'get_pages'
-
-  - Changed `reply.url().toString()` to `request.url().toString()` in qgis_stac_io.py  - Added `get_pages()` iterator method for STAC API pagination
-
-  - Pattern matches KADAS Albireo 2 catalog providers  - Automatically follows 'next' links in responses
-
-  - Fixed in both error handling and success logging paths (lines ~196 and ~212)  - Supports /collections and /search endpoints with pagination
-
-- **AttributeError**: `QgisStacApiIO` object has no attribute 'conforms_to'- **SSL Errors**: No more SSL module errors in restricted environments
-
-  - Added `conforms_to()` method to check API conformance classes- **Protocol Errors**: Better error handling for unknown protocols
-
-  - Added `assert_conforms_to()` method raising NotImplementedError if not conformant- **Proxy Detection**: Auto-detects VPN and corporate proxy settings
-
-  - Supports COLLECTIONS, ITEM_SEARCH, FILTER, SORT, FIELDS conformance classes- **VPN Support**: Works with Swiss federal VPN (forti-vpn pattern)
-
-  - Pattern matches pystac_client StacApiIO implementation
-
-- **AttributeError**: `QgisStacApiIO` object has no attribute 'get_pages'  - Creazione oggetto `QMenu` invece di stringa
-
-  - Added `get_pages()` iterator method for STAC API pagination
-
-  - Automatically follows 'next' rel links in responses#### Fixed  - Gestione differenziata Kadas vs QGIS in `initGui()`
-
-  - Returns Iterator[Dict] for memory-efficient pagination
-
-  - Supports /collections and /search endpoints with large result sets- **SSL Module Error**: `SSLError: Can't connect to HTTPS URL because the SSL module is not available`  - Cleanup migliorato in `unload()` con rimozione custom ribbon tab
-
-- **SSL Errors**: No more "SSL module not available" errors in restricted environments
-
-- **Protocol Errors**: Better error handling for unknown protocols with URL normalization- **Protocol Unknown Error**: HTTP → HTTPS redirect handling with URL normalization- **TECHNICAL**: Verifica proxy e VPN handling
-
-- **Proxy Detection**: Auto-detects VPN and corporate proxy settings from QGIS
-
-- **VPN Support**: Works with corporate VPNs (SSL inspection, certificates, routing)- **Proxy Detection**: Corporate proxy support with authentication  - Plugin compatibile con proxy HTTP/HTTPS (via QGIS settings)
+- Comprehensive logging for debugging  - Log file viewer in Settings tab- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)
 
 
 
-#### Technical Details- **VPN Support**: Works with VPN SSL inspection and corporate certificates  - Supporto VPN automatico (routing sistema operativo)
+---- **Dock Widget Restrictions**: Limited to left/right docking areas only- **Proxy Configuration**: Reads from QGIS Settings GUI (Settings → Network → Proxy)
 
-- Network patterns **100% identical** to KADAS Albireo 2 catalog providers
 
-- No external runtime dependencies (pystac/pystac_client bundled in plugin)  - Auth STAC API via QGIS Auth Manager (OAuth2, API Key, Basic)
 
-- Lazy proxy initialization with global configuration caching
+## [1.1.0] - 2022-07-18  - Prevents accidental docking to top/bottom panels- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)
 
-- VPN heuristic detection (proxy enabled + successful connection = VPN active)#### Technical  - Usa `pystac_client` che rispetta proxy di sistema
 
-- Comprehensive logging for debugging and troubleshooting
 
-- Network patterns **100% identical** to KADAS Albireo 2 catalog providers- **DOCS**: Aggiunto `KADAS_INTEGRATION.md` con dettagli implementazione
+### Features  - Auto-docks to right on startup
 
-#### Documentation
 
-- **DEVELOPMENT.md**: Technical documentation for developers- No external runtime dependencies (pystac/pystac_client bundled)- **DOCS**: Aggiunto `PROXY_VPN_ANALYSIS.md` con analisi tecnica network
 
-- **TESTING.md**: Network connectivity testing guide
-
-- **README.md**: Updated with detailed Network & Proxy Support section- Lazy proxy initialization with global caching- **DOCS**: Aggiornato README con sezione Network & Proxy Support
-
-- **CHANGELOG.md**: Complete version history with upgrade notes
-
-- VPN heuristic detection (proxy + connection = VPN)
-
----
-
-- Comprehensive logging for debugging### 1.1.0 2022-07-18
-
-## [1.1.0] - 2022-07-18
-
-- Fix for footprints layer loading workflow
-
-### Features
-
-- Data-driven filtering using STAC Queryables---- Data driven filtering using STAC Queryables
+- Data-driven filtering using STAC Queryables#### Fixed
 
 - Multiple assets and footprints loading/downloading
 
+- Minimizable plugin main window#### Changed- **AttributeError**: `QgsNetworkReplyContent` object has no attribute 'url' in qgis_stac_io.py
+
+- Subscription key usage for SAS-based connections
+
+- Support for COPC and netCDF layers- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager` (100% KADAS compatibility)  - Now using `request.url().toString()` instead of `reply.url().toString()`
+
+- New collection information dialog
+
+- Auto-load assets after downloading- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)  - Pattern matches KADAS Albireo 2 catalog providers
+
+- Support for CQL2-JSON filter language
+
+- Moved sort/order controls to search tab- **Proxy Configuration**: Reads from QGIS Settings GUI (Settings → Network → Proxy)  - Fixed in both error handling and success logging paths
+
+
+
+### Fixes- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)- **AttributeError**: `QgisStacApiIO` object has no attribute 'conforms_to'
+
+
+
+- Footprints layer loading workflow- **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface  - Added `conforms_to()` and `assert_conforms_to()` methods to QgisStacApiIO
+
+- Connection dialog window title in edit mode
+
+- Fallback to overview when thumbnail not available  - Methods check API conformance classes (COLLECTIONS, ITEM_SEARCH, FILTER, SORT, FIELDS)
+
+- Display selected collections correctly
+
+- Upgraded pystac-client library to 0.3.2#### Fixed  - Pattern matches pystac_client StacApiIO implementation
+
+
+
+---- **AttributeError**: `QgsNetworkReplyContent` object has no attribute 'url'- **AttributeError**: `QgisStacApiIO` object has no attribute 'get_pages'
+
+
+
+## [1.0.0] - 2022-01-13  - Changed `reply.url().toString()` to `request.url().toString()` in qgis_stac_io.py  - Added `get_pages()` iterator method for STAC API pagination
+
+
+
+### Fixes  - Pattern matches KADAS Albireo 2 catalog providers  - Automatically follows 'next' links in responses
+
+
+
+- Plugin UI lagging bug  - Fixed in both error handling and success logging paths (lines ~196 and ~212)  - Supports /collections and /search endpoints with pagination
+
+- Assets loading and downloading workflow
+
+- Support for vector-based assets (GeoJSON, GeoPackage)- **AttributeError**: `QgisStacApiIO` object has no attribute 'conforms_to'- **SSL Errors**: No more SSL module errors in restricted environments
+
+- API page size (default: 10 items)
+
+- Include file extension in downloaded files  - Added `conforms_to()` method to check API conformance classes- **Protocol Errors**: Better error handling for unknown protocols
+
+- Updated UI tooltips
+
+  - Added `assert_conforms_to()` method raising NotImplementedError if not conformant- **Proxy Detection**: Auto-detects VPN and corporate proxy settings
+
+---
+
+  - Supports COLLECTIONS, ITEM_SEARCH, FILTER, SORT, FIELDS conformance classes- **VPN Support**: Works with Swiss federal VPN (forti-vpn pattern)
+
+## [1.0.0-pre] - 2022-01-11
+
+  - Pattern matches pystac_client StacApiIO implementation
+
+### Features
+
+- **AttributeError**: `QgisStacApiIO` object has no attribute 'get_pages'  - Creazione oggetto `QMenu` invece di stringa
+
+- Connection testing functionality
+
+- Reworked filter and sort features  - Added `get_pages()` iterator method for STAC API pagination
+
+- STAC API conformance classes support
+
+- SAS token signing  - Automatically follows 'next' rel links in responses#### Fixed  - Gestione differenziata Kadas vs QGIS in `initGui()`
+
+- Asset downloading and footprint loading
+
+- Add STAC item assets as QGIS layers  - Returns Iterator[Dict] for memory-efficient pagination
+
+- Plugin documentation
+
+  - Supports /collections and /search endpoints with large result sets- **SSL Module Error**: `SSLError: Can't connect to HTTPS URL because the SSL module is not available`  - Cleanup migliorato in `unload()` con rimozione custom ribbon tab
+
+---
+
+- **SSL Errors**: No more "SSL module not available" errors in restricted environments
+
+## [beta] - 2021-12-11
+
+- **Protocol Errors**: Better error handling for unknown protocols with URL normalization- **Protocol Unknown Error**: HTTP → HTTPS redirect handling with URL normalization- **TECHNICAL**: Verifica proxy e VPN handling
+
+### Initial Release
+
+- **Proxy Detection**: Auto-detects VPN and corporate proxy settings from QGIS
+
+- Browse and search STAC API catalogs
+
+- Load STAC items as layers- **VPN Support**: Works with corporate VPNs (SSL inspection, certificates, routing)- **Proxy Detection**: Corporate proxy support with authentication  - Plugin compatibile con proxy HTTP/HTTPS (via QGIS settings)
+
+- Connection management
+
+- Asset preview and download
+
+- Basic authentication support
+
+- OAuth2 support via QGIS Auth Manager#### Technical Details- **VPN Support**: Works with VPN SSL inspection and corporate certificates  - Supporto VPN automatico (routing sistema operativo)
+
+- Search result pagination
+
+- Filter and sort support- Network patterns **100% identical** to KADAS Albireo 2 catalog providers
+
+- Default STAC API catalogs
+
+- No external runtime dependencies (pystac/pystac_client bundled in plugin)  - Auth STAC API via QGIS Auth Manager (OAuth2, API Key, Basic)
+
+---
+
+- Lazy proxy initialization with global configuration caching
+
+## Version Comparison
+
+- VPN heuristic detection (proxy enabled + successful connection = VPN active)#### Technical  - Usa `pystac_client` che rispetta proxy di sistema
+
+| Version | KADAS Support | Network Stack | Proxy | SSL |
+
+|---------|---------------|---------------|-------|-----|- Comprehensive logging for debugging and troubleshooting
+
+| 1.1.2 | ✅ Albireo 2 | Qt (QgsNetworkAccessManager) | Auto | Qt SSL |
+
+| 1.1.0 | ⚠️ Partial | Python requests | Manual | Python SSL |- Network patterns **100% identical** to KADAS Albireo 2 catalog providers- **DOCS**: Aggiunto `KADAS_INTEGRATION.md` con dettagli implementazione
+
+| 1.0.0 | ❌ No | Python requests | Manual | Python SSL |
+
+#### Documentation
+
+---
+
+- **DEVELOPMENT.md**: Technical documentation for developers- No external runtime dependencies (pystac/pystac_client bundled)- **DOCS**: Aggiunto `PROXY_VPN_ANALYSIS.md` con analisi tecnica network
+
+## Upgrade Notes
+
+- **TESTING.md**: Network connectivity testing guide
+
+### From 1.1.0 to 1.1.2
+
+- **README.md**: Updated with detailed Network & Proxy Support section- Lazy proxy initialization with global caching- **DOCS**: Aggiornato README con sezione Network & Proxy Support
+
+**Breaking Changes**: None
+
+- **CHANGELOG.md**: Complete version history with upgrade notes
+
+**New Features**:
+
+- Auto-docking to right panel- VPN heuristic detection (proxy + connection = VPN)
+
+- Automatic proxy detection
+
+- Full VPN support---
+
+- KADAS Albireo 2 optimizations
+
+- 15 new STAC catalogs- Comprehensive logging for debugging### 1.1.0 2022-07-18
+
+
+
+**Configuration Changes**:## [1.1.0] - 2022-07-18
+
+- Proxy: Configure in QGIS Settings (Settings → Options → Network → Proxy)
+
+- No plugin-specific proxy configuration needed- Fix for footprints layer loading workflow
+
+- SSL certificates handled automatically by Qt
+
+### Features
+
+**Testing**:
+
+```python- Data-driven filtering using STAC Queryables---- Data driven filtering using STAC Queryables
+
+# In KADAS Python Console:
+
+exec(open('test/quick_network_test.py').read())- Multiple assets and footprints loading/downloading
+
+```
+
 - Minimizable plugin main window- Multiple assets and footprints loading and downloading
+
+---
 
 - Subscription key usage for SAS-based connections (Azure Blob Storage)
 
+## Credits
+
 - Support for COPC (Cloud Optimized Point Cloud) layers## [1.1.0] - 2022-07-18- Minimizeable plugin main window
 
-- Support for netCDF layers
+- **Original Plugin**: QGIS STAC Plugin by Kartoza (sponsored by Microsoft)
 
-- New collection information dialog- Subscription key usage for SAS based connections
+- **KADAS Adaptation**: Michael Lanini (2026)- Support for netCDF layers
 
-- Auto-load assets after downloading
+- **Proxy Handler**: Based on swisstopo/topo-rapidmapping
 
-- Support for CQL2-JSON filter language### Features- Support for COPC layers
+- **Network Patterns**: KADAS Albireo 2 catalog providers- New collection information dialog- Subscription key usage for SAS based connections
 
-- Moved sort and order controls to search tab
 
-- Data-driven filtering using STAC Queryables- Support for netCDF layers
+
+---- Auto-load assets after downloading
+
+
+
+## Links- Support for CQL2-JSON filter language### Features- Support for COPC layers
+
+
+
+- **Repository**: https://github.com/mlanini/kadas-stac-plugin- Moved sort and order controls to search tab
+
+- **Original Plugin**: https://github.com/stac-utils/qgis-stac-plugin
+
+- **Issues**: https://github.com/mlanini/kadas-stac-plugin/issues- Data-driven filtering using STAC Queryables- Support for netCDF layers
+
+- **Releases**: https://github.com/mlanini/kadas-stac-plugin/releases
 
 ### Fixes
 
@@ -360,7 +524,7 @@ All notable changes to the KADAS STAC Plugin.All notable changes to the KADAS ST
 
 - **Original Plugin**: QGIS STAC Plugin by Kartoza (sponsored by Microsoft)---
 
-- **KADAS Adaptation**: Michele Lanini (2026)
+- **KADAS Adaptation**: Michael Lanini (2026)
 
 - **Proxy Handler**: Based on swisstopo/topo-rapidmapping network patterns## Credits
 
@@ -368,7 +532,7 @@ All notable changes to the KADAS STAC Plugin.All notable changes to the KADAS ST
 
 - **Original Plugin**: QGIS STAC Plugin by Kartoza (sponsored by Microsoft)
 
----- **KADAS Adaptation**: mlanini (2026)
+---- **KADAS Adaptation**: Michael Lanini (2026)
 
 - **Proxy Handler**: Based on swisstopo/topo-rapidmapping
 
