@@ -10,8 +10,8 @@ from multiprocessing import Process
 from mock.mock_http_server import MockSTACApiServer
 from qgis.PyQt.QtTest import QSignalSpy
 
-from qgis_stac.api.client import Client
-from qgis_stac.api.models import ItemSearch, SortField, SortOrder
+from kadas_stac.api.client import Client
+from kadas_stac.api.models import ItemSearch, SortField, SortOrder
 
 
 class STACApiClientTest(unittest.TestCase):

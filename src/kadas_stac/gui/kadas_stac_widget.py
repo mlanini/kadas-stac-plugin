@@ -57,13 +57,12 @@ from ..utils import (
 from .result_item_widget import add_footprint_helper, ResultItemWidget
 
 WidgetUi, _ = loadUiType(
-    os.path.join(os.path.dirname(__file__), "../ui/qgis_stac_main.ui")
+    os.path.join(os.path.dirname(__file__), "../ui/kadas_stac_main.ui")
 )
 
 
-class QgisStacWidget(QtWidgets.QMainWindow, WidgetUi):
-    """ Main plugin UI that contains tabs for search, results and settings
-    functionalities"""
+class KadasStacWidget(QtWidgets.QWidget, WidgetUi):
+    """ Main plugin UI (now QWidget) for embedding in a QDockWidget. Contains tabs for search, results and settings."""
 
     search_started = QtCore.pyqtSignal()
     search_completed = QtCore.pyqtSignal()
@@ -661,7 +660,7 @@ class QgisStacWidget(QtWidgets.QMainWindow, WidgetUi):
             0, 0, 1, 1,
             alignment=QtCore.Qt.AlignTop
         )
-        self.central_widget.layout().insertLayout(0, self.grid_layout)
+        self.layout().insertLayout(0, self.grid_layout)
 
     def prepare_extent_box(self):
         """ Configure the spatial extent box with the initial settings. """

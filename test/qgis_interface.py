@@ -26,7 +26,7 @@ import logging
 from qgis.PyQt.QtCore import QObject, pyqtSlot, pyqtSignal
 from qgis.core import QgsMapLayerRegistry
 from qgis.gui import QgsMapCanvasLayer
-LOGGER = logging.getLogger('qgis_stac')
+LOGGER = logging.getLogger('kadas_stac')
 
 
 #noinspection PyMethodMayBeStatic,PyPep8Naming

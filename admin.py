@@ -22,7 +22,7 @@ import toml
 import typer
 
 LOCAL_ROOT_DIR = Path(__file__).parent.resolve()
-SRC_NAME = "qgis_stac"
+SRC_NAME = "kadas_stac"
 PACKAGE_NAME = SRC_NAME.replace("_", "")
 TEST_FILES = [
     "test",
@@ -273,7 +273,21 @@ def compile_resources(
     target_path = output_directory / "resources.py"
     target_path.parent.mkdir(parents=True, exist_ok=True)
     _log(f"compile_resources target_path: {target_path}", context=context)
-    subprocess.run(shlex.split(f"pyrcc5 -o {target_path} {resources_path}"))
+    
+    # Try to find pyrcc5 in common locations
+    pyrcc5_cmd = "pyrcc5"
+    possible_paths = [
+        r"C:\Program Files\QGIS 3.40.7\apps\Python312\Scripts\pyrcc5.exe",
+        shutil.which("pyrcc5"),
+    ]
+    for path in possible_paths:
+        if path and os.path.exists(path):
+            pyrcc5_cmd = f'"{path}"'
+            break
+    
+    env = os.environ.copy()
+    env["PYTHONHOME"] = r"C:\Program Files\QGIS 3.40.7\apps\Python312"
+    subprocess.run(f'{pyrcc5_cmd} -o "{target_path}" "{resources_path}"', shell=True, env=env)
 
 
 @app.command()

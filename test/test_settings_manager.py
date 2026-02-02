@@ -8,8 +8,8 @@ import unittest
 import uuid
 
 
-from qgis_stac.conf import settings_manager
-from qgis_stac.conf import ConnectionSettings
+from kadas_stac.conf import settings_manager
+from kadas_stac.conf import ConnectionSettings
 
 
 class SettingsManagerTest(unittest.TestCase):

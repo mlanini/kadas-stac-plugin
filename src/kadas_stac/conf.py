@@ -354,7 +354,7 @@ class SettingsManager(QtCore.QObject):
     """Manages saving/loading settings for the plugin in QgsSettings.
     """
 
-    BASE_GROUP_NAME: str = "qgis_stac"
+    BASE_GROUP_NAME: str = "kadas_stac"
     CONNECTION_GROUP_NAME: str = "connections"
     SELECTED_CONNECTION_KEY: str = "selected_connection"
     COLLECTION_GROUP_NAME: str = "collections"

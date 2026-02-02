@@ -55,6 +55,13 @@ from ..utils import log, tr
 
 from ..conf import settings_manager
 from ..definitions.constants import SAS_SUBSCRIPTION_VARIABLE
+from ..logger import get_logger
+
+# Initialize logger
+logger = get_logger(level="DEBUG")
+
+# Import proxy handler only when needed (lazy import to avoid SSL issues)
+# from .proxy_handler import get_pystac_kwargs
 
 
 class ContentFetcherTask(QgsTask):
@@ -102,15 +109,51 @@ class ContentFetcherTask(QgsTask):
         :returns: Whether the task completed successfully
         :rtype: bool
         """
+        logger.debug(f"ContentFetcherTask starting: url={self.url}, resource_type={self.resource_type}")
+        
         pystac_auth = {}
         if self.auth_config:
+            logger.debug("Preparing auth properties")
             pystac_auth = self.prepare_auth_properties(
                 self.auth_config
             )
+        
+        # Get proxy and SSL configuration
+        stac_io = None
         try:
-            self.client = Client.open(self.url, **pystac_auth)
+            logger.debug("Creating QGIS-based StacApiIO (avoids Python SSL module)")
+            from .qgis_stac_io import QgisStacApiIO
+            
+            # QgisStacApiIO uses QGIS QgsNetworkAccessManager which handles proxy/SSL automatically
+            # No need to configure proxy manually - QGIS settings are respected
+            stac_io = QgisStacApiIO(headers=pystac_auth.get('headers', {}))
+            
+            logger.info("QgisStacApiIO created - using QGIS network stack (SSL via Qt)")
+            
+        except Exception as e:
+            # If QGIS StacIO fails, log error
+            logger.error(f"Failed to create QgisStacApiIO: {e}", exc_info=True)
+            log(f"Error: QGIS network not available: {e}", info=False, notify=True)
+        
+        try:
+            logger.info(f"Opening STAC client: {self.url}")
+            
+            # Open client with QGIS StacIO
+            if stac_io:
+                from ..lib.pystac_client import Client
+                self.client = Client.from_file(self.url, stac_io=stac_io, headers=pystac_auth.get('headers', {}))
+                logger.info("STAC client opened with QgisStacApiIO")
+            else:
+                # This will fail if SSL module is not available, but try anyway as fallback
+                logger.warning("Falling back to default Client.open() - may fail without SSL module")
+                self.client = Client.open(self.url, headers=pystac_auth.get('headers', {}))
+                logger.info("STAC client opened with default configuration")
+            
+            logger.info(f"STAC client opened successfully")
+            
             if self.resource_type == \
                     ResourceType.FEATURE:
+                logger.debug("Fetching FEATURE resources")
                 if self.search_params:
                     response = self.client.search(
                         **self.search_params.params()
@@ -120,9 +163,11 @@ class ContentFetcherTask(QgsTask):
                 self.response = self.prepare_items_results(
                     response
                 )
+                logger.info(f"Feature search completed: {len(self.response) if isinstance(self.response, list) else 'unknown'} results")
 
             elif self.resource_type == \
                     ResourceType.COLLECTION:
+                logger.debug("Fetching COLLECTION resources")
                 if self.search_params and self.search_params.get('collection_id'):
                     response = self.client.get_collection(
                         self.search_params.get('collection_id')
@@ -135,8 +180,10 @@ class ContentFetcherTask(QgsTask):
                     self.response = self.prepare_collections_results(
                         response
                     )
+                logger.info(f"Collection fetch completed")
 
             elif self.resource_type == ResourceType.CONFORMANCE:
+                logger.debug("Fetching CONFORMANCE information")
                 if self.client._stac_io and \
                         self.client._stac_io._conformance:
                     self.response = self.prepare_conformance_results(
@@ -144,6 +191,7 @@ class ContentFetcherTask(QgsTask):
                     )
                 else:
                     self.error = tr("No conformance available")
+                    logger.warning("No conformance available")
                 self.pagination = ResourcePagination()
             else:
                 raise NotImplementedError
@@ -153,7 +201,12 @@ class ContentFetcherTask(QgsTask):
                 JSONDecodeError,
                 STACTypeError
         ) as err:
+            logger.error(f"STAC API Error ({type(err).__name__}): {str(err)}", exc_info=True)
             log(str(err))
+            self.error = str(err)
+        except Exception as err:
+            logger.critical(f"Unexpected error in ContentFetcherTask: {type(err).__name__}: {str(err)}", exc_info=True)
+            log(f"Unexpected error: {str(err)}")
             self.error = str(err)
 
         return self.response is not None

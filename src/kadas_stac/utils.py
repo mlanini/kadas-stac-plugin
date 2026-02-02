@@ -34,23 +34,23 @@ def tr(message):
     :rtype: QString
     """
     # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-    return QtCore.QCoreApplication.translate("QgisStac", message)
+    return QtCore.QCoreApplication.translate("KadasStac", message)
 
 
 def log(
         message: str,
-        name: str = "qgis_stac",
+        name: str = "kadas_stac",
         info: bool = True,
         notify: bool = True,
 ):
-    """ Logs the message into QGIS logs using qgis_stac as the default
+    """ Logs the message into KADAS/QGIS logs using kadas_stac as the default
     log instance.
     If notify_user is True, user will be notified about the log.
 
     :param message: The log message
     :type message: str
 
-    :param name: Name of te log instance, qgis_stac is the default
+    :param name: Name of the log instance, kadas_stac is the default
     :type message: str
 
     :param info: Whether the message is about info or a

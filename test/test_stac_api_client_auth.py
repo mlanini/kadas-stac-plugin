@@ -10,7 +10,7 @@ from multiprocessing import Process
 from mock.mock_http_server import MockSTACApiServer
 from qgis.PyQt.QtTest import QSignalSpy
 
-from qgis_stac.api.client import Client
+from kadas_stac.api.client import Client
 from qgis.core import QgsApplication
 from qgis.core import QgsAuthMethodConfig
 
