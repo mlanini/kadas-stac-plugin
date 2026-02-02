@@ -1,144 +1,120 @@
-# KADAS STAC Plugin# KADAS STAC Plugin# KADAS STAC Plugin# KADAS STAC Plugin# kadas-stac-plugin
+# KADAS STAC Plugin# KADAS STAC Plugin
 
 
 
-[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)
+[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)
 
-[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)
+[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)
 
-[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)
 
-**STAC API Browser for KADAS Albireo 2** - Browse and load STAC API catalogs directly in KADAS.
 
-[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)
+**STAC API Browser for KADAS Albireo 2****STAC API Browser for KADAS Albireo 2** - Browse and load STAC API catalogs directly in KADAS.
 
-**Repository**: https://github.com/mlanini/kadas-stac-plugin
 
-[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)
 
----
+------
 
-**STAC API Browser for KADAS Albireo 2** - Browse and load STAC API catalogs directly in KADAS.
 
-## 🌍 Description
 
-[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)
+## 📖 About## 📖 About
 
-**KADAS STAC Plugin** is a plugin optimized for **KADAS Albireo 2** that allows you to explore and load geospatial data from catalogs compliant with [STAC API](https://stacspec.org/) specifications.
 
-**Repository**: https://github.com/mlanini/kadas-stac-plugin
 
-### Project Origin
+KADAS STAC Plugin allows you to explore and load geospatial data from [STAC API](https://stacspec.org/) catalogs directly in KADAS Albireo 2.KADAS STAC Plugin allows you to explore and load geospatial data from [STAC API](https://stacspec.org/) catalogs directly in KADAS Albireo 2.
 
-[![GitHub release](https://img.shields.io/github/v/release/mlanini/kadas-stac-plugin?include_prereleases)](https://github.com/mlanini/kadas-stac-plugin/releases)![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/stac-utils/qgis-stac-plugin/ci.yml?branch=main)
 
-This plugin is an **adapted fork** of the open source project [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) developed by **Kartoza**, reworked to ensure full compatibility with the KADAS Albireo 2.x environment.
 
----
+**Origin**: This plugin is an adapted fork of [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) developed by **Kartoza**, optimized for KADAS Albireo 2 compatibility.**Origin**: This plugin is an adapted fork of [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) developed by **Kartoza**, optimized for KADAS Albireo 2 compatibility.
 
-**Key differences from the original QGIS plugin:**
 
-**STAC API Browser for KADAS Albireo 2** - Plugin per navigare e caricare cataloghi STAC API direttamente in KADAS.
 
-- ✅ **Qt Network Stack**: Uses exclusively `QgsNetworkAccessManager` (identical to KADAS catalog providers)
+**Credits**: Original project by [Kartoza](https://kartoza.com) under GNU GPL 3.0 License.**Credits**: Original project by [Kartoza](https://kartoza.com) under GNU GPL 3.0 License.
 
-- ✅ **Automatic QGIS Proxy**: Respects QGIS/KADAS proxy settings without additional configuration## 🌍 Description
 
-- ✅ **Dedicated Logger**: File-based logging system with automatic rotation (`~/.kadas/stac.log`)
 
-- ✅ **KADAS-optimized UI**: Dock widget with limited docking areas (left/right only)[![License](https://img.shields.io/github/license/mlanini/kadas-stac-plugin)](LICENSE)![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/stac-utils/qgis-stac-plugin?include_prereleases)
+------
 
-- ✅ **KADAS Branding**: Interface renamed and customized for the KADAS ecosystem
 
-- ✅ **Conformance validation**: Full STAC API conformance classes support**KADAS STAC Plugin** is a plugin optimized for **KADAS Albireo 2** that allows you to explore and load geospatial data from catalogs compliant with [STAC API](https://stacspec.org/) specifications.
 
-- ✅ **Pagination support**: Efficient iterator for large catalogs
+## ✨ Features## ✨ Features
 
-**Repository**: https://github.com/mlanini/kadas-stac-plugin
 
-**Credits**: Original project developed by [Kartoza](https://kartoza.com) for QGIS under the GNU GPL 3.0 License. Thanks to the STAC community and original QGIS plugin developers.
 
-### Project Origin
+- 🔍 Browse 22+ STAC API catalogs (Planetary Computer, Earth Search, Copernicus, ESA, NASA, etc.)- 🔍 Browse 22+ STAC API catalogs (Planetary Computer, Earth Search, Copernicus, ESA, etc.)
 
----
+- 📊 Advanced filters: date, extent, collection, custom properties- 📊 Advanced filters (date, extent, collection, custom properties)
 
-![GitHub](https://img.shields.io/github/license/stac-utils/qgis-stac-plugin)
+- 🗺️ Load footprints and assets as KADAS layers- 🗺️ Load footprints and assets as KADAS layers
 
-## ✨ Features
+- 📥 Download assets with optional auto-loading- 📥 Download assets with optional auto-loading
 
-This plugin is an **adapted fork** of the open source project [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) developed by **Kartoza**, reworked to ensure full compatibility with the KADAS Albireo 2.x environment.
+- 🔐 Authentication support (Basic, OAuth2, API Key)- 🔐 Authentication support (Basic, OAuth2, API Key)
 
-- 🔍 **STAC API Search**: Browse STAC catalogs (Planetary Computer, Earth Search, data.geo.admin.ch, etc.)
+- 🌐 Automatic proxy/VPN support via QGIS settings- 🌐 Automatic proxy/VPN support via QGIS settings
 
-- 📊 **Advanced Filters**: Filter by date, geographic extent, collection, custom properties---
 
-- 🗺️ **Layer Loading**: Add footprints and assets directly as QGIS/KADAS layers
 
-- 📥 **Asset Download**: Download assets locally with optional automatic loading**Key differences from the original QGIS plugin:**
+------
 
-- 🔐 **Authentication**: QGIS authentication support (Basic, OAuth2, API Key)
 
-- 🌐 **Multi-catalog**: Manage multiple connections to different STAC endpointsPlugin for browsing and loading STAC API catalogs. Optimized for **KADAS Albireo 2** compatibility.
 
-- 📄 **Metadata Viewer**: View complete collection and item metadata
+## 📦 Installation## 📦 Installation
 
-- ✅ **Qt Network Stack**: Uses exclusively `QgsNetworkAccessManager` (identical to KADAS catalog providers)
+
+
+1. Download: [`kadas_stac.1.1.2.zip`](https://github.com/mlanini/kadas-stac-plugin/releases/download/v1.1.2/kadas_stac.1.1.2.zip)### Install from ZIP
+
+2. KADAS/QGIS → **Plugins** → **Manage and Install Plugins** → **Install from ZIP**
+
+3. Browse to downloaded ZIP → **Install Plugin**1. Download: [`kadas_stac.1.1.2.zip`](https://github.com/mlanini/kadas-stac-plugin/releases)
+
+2. KADAS/QGIS → **Plugins** → **Manage and Install Plugins**
+
+---3. Select **Install from ZIP**
+
+4. Browse to downloaded ZIP → **Install Plugin**
+
+## 🚀 Quick Start
 
 ---
 
-- ✅ **Automatic QGIS Proxy**: Respects QGIS/KADAS proxy settings without additional configuration## 🌍 Descrizione
+1. **Connect**: KADAS → **STAC API Browser** → **New connection**
 
-## 📦 Installation
+2. **Search**: Select collection → Apply filters → Click **Search**## 🚀 Quick Start
 
-- ✅ **Dedicated Logger**: File-based logging system with automatic rotation (`~/.kadas/stac.log`)
-
-### Method 1: Install from ZIP (Recommended)
-
-- ✅ **KADAS-optimized UI**: Dock widget with limited docking areas (left/right only)QGIS plugin for reading STAC APIs
-
-1. Download the latest release: [`kadas_stac.1.1.2.zip`](https://github.com/mlanini/kadas-stac-plugin/releases)
-
-2. Open KADAS/QGIS → **Plugins** → **Manage and Install Plugins**- ✅ **KADAS Branding**: Interface renamed and customized for the KADAS ecosystem
-
-3. Select **Install from ZIP**
-
-4. Browse to the downloaded ZIP file- ✅ **Conformance validation**: Full STAC API conformance classes support**KADAS STAC Plugin** è un plugin ottimizzato per **KADAS Albireo 2** che permette di esplorare e caricare dati geospaziali da cataloghi conformi alle specifiche [STAC API](https://stacspec.org/).
-
-5. Click **Install Plugin**
-
-- ✅ **Pagination support**: Efficient iterator for large catalogs
-
-### Method 2: Plugin Repository
-
-**Repository**: https://github.com/mlanini/kadas-stac-plugin
-
-Not yet available in the official QGIS plugin repository.
-
-**Credits**: Original project developed by [Kartoza](https://kartoza.com) for QGIS under the GNU GPL 3.0 Licence. Thanks to the STAC community and original QGIS plugin developers.
-
----
-
-### Origine del Progetto
-
-## 🚀 Usage
-
----
+3. **Load**: Select items → **Add footprints** or **View assets** → **Add to map**
 
 ### 1️⃣ Connect to STAC API
 
+---
+
 Site https://stac-utils.github.io/qgis-stac-plugin
+
+## 📚 Documentation
 
 1. Open the plugin: **KADAS** → **STAC API Browser**
 
-2. In the **Search** tab, click **New** to create a new connection## ✨ Features
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Technical guide2. In the **Search** tab, click **New** to create a new connection## ✨ Features
+
+- [TESTING.md](TESTING.md) - Network testing
 
 3. Configure parameters:
 
+---
+
    - **Name**: Descriptive name (e.g., "Planetary Computer")Questo plugin è un **fork adattato** del progetto open source [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) sviluppato da **Kartoza**, rielaborato per garantire piena compatibilità con l'ambiente KADAS Albireo 2.
+
+## 📝 License
 
    - **URL**: STAC API endpoint (e.g., `https://planetarycomputer.microsoft.com/api/stac/v1`)
 
+GNU General Public License v2.0 - See [LICENSE](LICENSE)
+
    - **Authentication** (optional): Configure credentials if required- 🔍 **STAC API Search**: Browse STAC catalogs (Planetary Computer, Earth Search, data.geo.admin.ch, etc.)
+
+**Version**: 1.1.2 | **Compatibility**: KADAS Albireo 2.x / QGIS 3.28+
 
    - **Page Size**: Number of results per page (default: 10)
 
