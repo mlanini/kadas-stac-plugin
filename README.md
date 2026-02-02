@@ -17,7 +17,7 @@ Browse and load geospatial data from [STAC API](https://stacspec.org/) catalogs 
 
 ## ✨ Features
 
-- 🔍 21 STAC API catalogs (Planetary Computer, Copernicus, ESA, NASA, etc.)
+- 🔍 21 STAC API catalogs (Swiss Federal Geodata, Planetary Computer, Copernicus, ESA, NASA, etc.)
 - 📊 Advanced filters (date, extent, collection)
 - 🗺️ Load footprints and assets as layers
 - 📥 Download with auto-loading
