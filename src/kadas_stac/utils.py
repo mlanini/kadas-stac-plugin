@@ -79,9 +79,9 @@ def config_defaults_catalogs():
 
         capability = ApiCapability(catalog["capability"]) \
             if catalog["capability"] else None
-        if not settings_manager.is_connection(
-                connection_id
-        ):
+        
+        # Always add if not exists (allows adding new catalogs in updates)
+        if not settings_manager.is_connection(connection_id):
             connection_settings = ConnectionSettings(
                 id=connection_id,
                 name=catalog['name'],

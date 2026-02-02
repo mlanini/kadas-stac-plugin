@@ -92,14 +92,8 @@ class KadasStac:
         if self.toolbar is not None:
             self.toolbar.setObjectName("KadasStac")
 
-        # Add default catalogs, first check if they have already
-        # been set.
-        if not settings_manager.get_value(
-                "default_catalogs_set",
-                default=False,
-                setting_type=bool
-        ):
-            config_defaults_catalogs()
+        # Add default catalogs (will only add new ones if they don't exist)
+        config_defaults_catalogs()
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -279,7 +273,7 @@ class KadasStac:
         """Cleanup necessary items here when plugin widget is closed"""
         self.log.debug("Closing plugin panel")
         if self.dock_widget is not None:
-            self.iface.removeDockWidget(self.dock_widget)
+            self.iface.mainWindow().removeDockWidget(self.dock_widget)
             self.dock_widget = None
         if hasattr(self, 'main_action') and self.main_action:
             self.main_action.setChecked(False)
@@ -289,7 +283,7 @@ class KadasStac:
         """Removes the plugin menu item, icon, and dock widget from QGIS GUI."""
         self.log.info("Unloading plugin")
         if self.dock_widget is not None:
-            self.iface.removeDockWidget(self.dock_widget)
+            self.iface.mainWindow().removeDockWidget(self.dock_widget)
             self.dock_widget = None
             
         # Remove menu based on which interface is used
@@ -332,17 +326,19 @@ class KadasStac:
         # which uses QGIS QgsNetworkAccessManager (respects QGIS proxy settings)
         
         if self.dock_widget is None:
-            # First time: create dock widget and add it to the right side
+            # First time: create dock widget, add it to right side, and show it
             try:
                 self.log.info("Creating dock widget for first time")
                 self.dock_widget = KadasStacDockWidget(self.iface.mainWindow())
+                self.dock_widget.setObjectName("KadasStacDock")
                 self.dock_widget.visibilityChanged.connect(self._on_visibility_changed)
-                self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_widget)
-                # Show automatically on first load
+                # Add as dock widget to main window (ensures proper docking)
+                self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, self.dock_widget)
                 self.dock_widget.show()
                 self.dock_widget.raise_()
                 self.pluginIsActive = True
                 self.log.info("Dock widget created and shown successfully")
+                return  # Exit after first creation
             except Exception as e:
                 self.log.critical(f"Failed to create dock widget: {e}", exc_info=True)
                 QMessageBox.critical(
@@ -353,18 +349,15 @@ class KadasStac:
                 if hasattr(self, 'main_action') and self.main_action:
                     self.main_action.setChecked(False)
                 return
+        
+        # Toggle visibility on subsequent calls
+        if self.dock_widget.isVisible():
+            self.log.debug("Hiding dock widget")
+            self.dock_widget.hide()
         else:
-            # Toggle visibility on subsequent calls
-            if self.dock_widget.isVisible():
-                self.log.debug("Hiding dock widget")
-                self.dock_widget.hide()
-            else:
-                self.log.debug("Showing dock widget")
-                self.dock_widget.show()
-                self.dock_widget.raise_()
-            
-        if not self.pluginIsActive:
-            self.pluginIsActive = True
+            self.log.debug("Showing dock widget")
+            self.dock_widget.show()
+            self.dock_widget.raise_()
 
     def _on_visibility_changed(self, visible):
         """Sync main action checked state with dock widget visibility"""

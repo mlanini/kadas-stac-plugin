@@ -61,15 +61,29 @@ class AssetWidget(QtWidgets.QWidget, WidgetUi):
         self.download_box.toggled.connect(self.asset_download_selected)
         self.download_box.stateChanged.connect(self.asset_download_selected)
 
-        if asset_load:
-            self.load_box.setToolTip(
-                tr("Asset contains {} media type which "
-                   "cannot be loaded as a map layer in QGIS"
-                   ).format(self.asset.type)
-            )
+        if not asset_load:
+            # Provide specific tooltip based on reason
+            if self.asset.href and self.asset.href.startswith('s3://'):
+                self.load_box.setToolTip(
+                    tr("S3 protocol assets cannot be loaded directly. "
+                       "QGIS/KADAS requires HTTP/HTTPS URLs.")
+                )
+                self.download_box.setToolTip(
+                    tr("S3 protocol assets cannot be downloaded directly. "
+                       "QGIS/KADAS requires HTTP/HTTPS URLs.")
+                )
+            else:
+                self.load_box.setToolTip(
+                    tr("Asset contains {} media type which "
+                       "cannot be loaded as a map layer in QGIS"
+                       ).format(self.asset.type)
+                )
 
     def asset_loadable(self):
         """ Returns if asset can be added into QGIS"""
+        
+        # S3 protocol is supported via GDAL VSI (/vsis3/)
+        # No need to block S3 URLs
 
         layer_types = [
             AssetLayerType.COG.value,

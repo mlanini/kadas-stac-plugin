@@ -48,13 +48,6 @@ CATALOGS = [
         "selected": False,
         "capability": None,
     },
-    {
-        "id": "f6e5d4c3-b2a1-4f5e-9d8c-7b6a5e4d3c2b",
-        "name": "Vantor Open Data",
-        "url": "https://maxar-opendata.s3.dualstack.us-west-2.amazonaws.com/events/catalog.json",
-        "selected": False,
-        "capability": None,
-    },
     # Additional verified STAC API 1.0 catalogs
     {
         "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",

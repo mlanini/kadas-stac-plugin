@@ -11,15 +11,16 @@ from osgeo import ogr, gdal
 
 from functools import partial
 
-from qgis import processing
-
 from qgis.PyQt import QtCore, QtGui, QtWidgets
 from qgis.PyQt.uic import loadUiType
+from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QUrl
 
 from qgis.core import (
     Qgis,
     QgsApplication,
     QgsMapLayer,
+    QgsNetworkContentFetcher,
     QgsNetworkContentFetcherTask,
     QgsPointCloudLayer,
     QgsProcessing,
@@ -327,6 +328,17 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
             return
 
         url = self.sign_asset_href(asset.href)
+        
+        # Convert S3 URLs to GDAL VSI format for direct access
+        if url.startswith('s3://'):
+            # Convert s3://bucket/key to /vsis3/bucket/key
+            vsi_url = url.replace('s3://', '/vsis3/')
+            self.main_widget.show_message(
+                tr("Converting S3 URL to GDAL VSI format: {}").format(vsi_url),
+                Qgis.Info
+            )
+            url = vsi_url
+        
         extension = Path(asset.href).suffix
         extension_suffix = extension.split('?')[0] if extension else ""
         title = f"{asset.title}{extension_suffix}"
@@ -366,20 +378,98 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
             )
             feedback.progressChanged.connect(self.download_progress)
 
-            results = processing.run(
-                "qgis:filedownloader",
-                params,
-                feedback=feedback
-            )
-
-            # After asset download has finished, load the asset
-            # if it can be loaded as a QGIS map layer.
-            if results and load_asset and asset.type in ''.join(layer_types):
-                asset.href = self.download_result["file"]
-                asset.name = title
-                asset.type = AssetLayerType.GEOTIFF.value \
-                    if AssetLayerType.COG.value in asset.type else asset.type
-                self.load_asset(asset)
+            # Check if URL is a VSI path (S3, etc.)
+            if url.startswith('/vsis3/'):
+                # Use GDAL to copy S3 file
+                try:
+                    from osgeo import gdal
+                    gdal.UseExceptions()
+                    
+                    # Open source VSI file
+                    src_ds = gdal.Open(url)
+                    if src_ds is None:
+                        raise Exception(f"Cannot open S3 file via GDAL VSI: {url}")
+                    
+                    # Copy to destination using GDAL CreateCopy
+                    driver = gdal.GetDriverByName('GTiff')
+                    if driver is None:
+                        raise Exception("GTiff driver not available")
+                    
+                    feedback.setProgress(10)
+                    dst_ds = driver.CreateCopy(output, src_ds, 0)
+                    
+                    if dst_ds is None:
+                        raise Exception("Failed to copy S3 file")
+                    
+                    # Close datasets
+                    dst_ds = None
+                    src_ds = None
+                    
+                    self.download_result["file"] = output
+                    feedback.setProgress(100)
+                    
+                    self.update_inputs(True)
+                    self.main_widget.show_message(
+                        tr("Download for file {} has finished.").format(output),
+                        level=Qgis.Info
+                    )
+                    
+                    # Load asset if requested
+                    if load_asset and asset.type in ''.join(layer_types):
+                        asset.href = output
+                        asset.name = title
+                        asset.type = AssetLayerType.GEOTIFF.value \
+                            if AssetLayerType.COG.value in asset.type else asset.type
+                        self.load_asset(asset)
+                        
+                except Exception as e:
+                    self.update_inputs(True)
+                    self.main_widget.show_message(
+                        tr("Error downloading S3 file via GDAL VSI: {}").format(str(e))
+                    )
+                return
+            
+            # Standard HTTP/HTTPS download using QgsNetworkContentFetcher
+            fetcher = QgsNetworkContentFetcher()
+            
+            def on_download_finished():
+                try:
+                    reply = fetcher.reply()
+                    if reply and reply.error() == 0:
+                        # Write downloaded content to file
+                        content = reply.content()
+                        with open(output, 'wb') as f:
+                            f.write(content.data())
+                        
+                        self.download_result["file"] = output
+                        feedback.setProgress(100)
+                        
+                        # Load asset if requested
+                        if load_asset and asset.type in ''.join(layer_types):
+                            asset.href = output
+                            asset.name = title
+                            asset.type = AssetLayerType.GEOTIFF.value \
+                                if AssetLayerType.COG.value in asset.type else asset.type
+                            self.load_asset(asset)
+                    else:
+                        error_msg = reply.errorString() if reply else "Unknown error"
+                        raise Exception(error_msg)
+                except Exception as e:
+                    self.update_inputs(True)
+                    self.main_widget.show_message(
+                        tr("Error in downloading file, {}").format(str(e))
+                    )
+            
+            def on_download_progress(received, total):
+                if total > 0:
+                    progress = int((received / total) * 100)
+                    feedback.setProgress(progress)
+            
+            fetcher.finished.connect(on_download_finished)
+            fetcher.downloadProgress.connect(on_download_progress)
+            
+            request = QNetworkRequest(QUrl(url))
+            fetcher.fetchContent(request)
 
         except Exception as e:
             self.update_inputs(True)
@@ -472,6 +562,15 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
         ])
         current_asset_href = asset.href
         asset.href = self.sign_asset_href(asset.href)
+        
+        # Convert S3 URLs to GDAL VSI format for direct layer loading
+        if asset.href.startswith('s3://'):
+            # Convert s3://bucket/key to /vsis3/bucket/key (GDAL Virtual File System)
+            asset.href = asset.href.replace('s3://', '/vsis3/')
+            self.main_widget.show_message(
+                tr("Loading S3 asset via GDAL VSI: {}").format(asset.title or asset.href),
+                Qgis.Info
+            )
 
         if asset_type in raster_types:
             layer_type = QgsMapLayer.RasterLayer
