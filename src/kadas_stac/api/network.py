@@ -24,6 +24,7 @@ from qgis.PyQt import (
 
 from .models import (
     ApiCapability,
+    CatalogType,
     Conformance,
     Collection,
     Constants,
@@ -64,6 +65,89 @@ logger = get_logger(level="DEBUG")
 # from .proxy_handler import get_pystac_kwargs
 
 
+def get_all_items_recursive(client, max_items=100, max_depth=3, collection_filter=None):
+    """
+    Recursively navigate a static STAC catalog to collect all items.
+    
+    For hierarchical static catalogs (like Maxar Open Data), items may be nested
+    in sub-collections. This function:
+    1. Gets items from the current catalog/collection
+    2. Recursively gets items from all child collections
+    
+    Args:
+        client: pystac_client.Client instance
+        max_items: Maximum total items to return (safety limit)
+        max_depth: Maximum recursion depth (safety limit)
+        collection_filter: Optional list of collection IDs to filter (only items from these collections)
+    
+    Returns:
+        List of pystac.Item objects
+    """
+    all_items = []
+    
+    def _collect_items_recursive(catalog_or_collection, current_depth=0):
+        """Internal recursive function to collect items."""
+        if current_depth > max_depth:
+            logger.warning(f"Max recursion depth ({max_depth}) reached, stopping")
+            return
+        
+        if len(all_items) >= max_items:
+            logger.info(f"Max items ({max_items}) reached, stopping")
+            return
+        
+        # Check if we should skip this collection based on filter
+        if collection_filter and hasattr(catalog_or_collection, 'id'):
+            collection_id = catalog_or_collection.id
+            if collection_id not in collection_filter:
+                logger.debug(f"Skipping collection '{collection_id}' (not in filter: {collection_filter})")
+                # Still check child collections (might match deeper in hierarchy)
+            else:
+                logger.info(f"✓ Collection '{collection_id}' matches filter")
+        
+        # Get direct items from this catalog/collection
+        try:
+            items_iterator = catalog_or_collection.get_items()
+            for item in items_iterator:
+                if len(all_items) >= max_items:
+                    break
+                    
+                # Apply collection filter to items
+                if collection_filter:
+                    item_collection = getattr(item, 'collection_id', None)
+                    logger.debug(f"Item {item.id} has collection_id: '{item_collection}'")
+                    if item_collection and item_collection not in collection_filter:
+                        logger.debug(f"Skipping item from collection '{item_collection}' (not in filter: {collection_filter})")
+                        continue
+                    elif not item_collection:
+                        logger.warning(f"Item {item.id} has no collection_id attribute, including it")
+                
+                all_items.append(item)
+                logger.debug(f"Found item: {item.id} (total: {len(all_items)})")
+        except Exception as e:
+            logger.debug(f"No items at this level: {e}")
+        
+        # Recursively get items from child collections
+        try:
+            collections_iterator = catalog_or_collection.get_collections()
+            for collection in collections_iterator:
+                if len(all_items) >= max_items:
+                    break
+                logger.debug(f"Descending into collection: {collection.id}")
+                _collect_items_recursive(collection, current_depth + 1)
+        except Exception as e:
+            logger.debug(f"No child collections: {e}")
+    
+    # Start recursive collection from the client (root catalog)
+    if collection_filter:
+        logger.info(f"Starting recursive item collection with collection filter: {collection_filter}")
+    else:
+        logger.info("Starting recursive item collection from static catalog")
+    _collect_items_recursive(client)
+    logger.info(f"Recursive collection complete: {len(all_items)} items found")
+    
+    return all_items
+
+
 class ContentFetcherTask(QgsTask):
     """
     Task to manage the STAC API content search using the pystac_client library,
@@ -89,6 +173,7 @@ class ContentFetcherTask(QgsTask):
             search_params: ItemSearch,
             resource_type: ResourceType,
             api_capability: ApiCapability = None,
+            catalog_type: str = "api",  # 'api' or 'static'
             response_handler: typing.Callable = None,
             error_handler: typing.Callable = None,
             auth_config = None,
@@ -98,10 +183,56 @@ class ContentFetcherTask(QgsTask):
         self.search_params = search_params
         self.resource_type = resource_type
         self.api_capability = api_capability
+        self.catalog_type = catalog_type
         self.response_handler = response_handler
         self.error_handler = error_handler
         self.auth_config = auth_config
 
+    def _try_static_fallback(self):
+        """
+        Try to fetch items using static catalog navigation as fallback.
+        
+        :returns: True if fallback succeeded, False otherwise
+        :rtype: bool
+        """
+        logger.warning(f"Attempting static catalog fallback for {self.url}")
+        logger.info("Auto-switching to static catalog navigation (recursive get_items)")
+        
+        try:
+            # Get collection filter from search params if available
+            collection_filter = None
+            if self.search_params and hasattr(self.search_params, 'collections') and self.search_params.collections:
+                collection_filter = self.search_params.collections
+                logger.info(f"Applying collection filter in fallback mode: {collection_filter}")
+            
+            # Use recursive navigation for hierarchical static catalogs
+            items = get_all_items_recursive(
+                self.client, 
+                max_items=100, 
+                max_depth=3,
+                collection_filter=collection_filter
+            )
+            
+            # Convert pystac.Item objects to models.Item objects
+            self.response = [self._prepare_single_item(item) for item in items if item]
+            # Filter out None results
+            self.response = [r for r in self.response if r is not None]
+            
+            # Create pagination object for fallback mode
+            self.pagination = ResourcePagination(
+                total_items=len(self.response),
+                total_pages=1,
+                current_page=1,
+                page_size=len(self.response)
+            )
+            logger.info(f"✅ Static catalog fallback successful: {len(self.response)} items")
+            logger.warning(f"⚠️ This catalog should be configured as 'Static Catalog' type in connection settings")
+            return True
+            
+        except Exception as fallback_error:
+            logger.error(f"❌ Static catalog fallback failed: {str(fallback_error)}", exc_info=True)
+            return False
+    
     def run(self):
         """
         Runs the main task operation in the background.
@@ -154,16 +285,99 @@ class ContentFetcherTask(QgsTask):
             if self.resource_type == \
                     ResourceType.FEATURE:
                 logger.debug("Fetching FEATURE resources")
-                if self.search_params:
-                    response = self.client.search(
-                        **self.search_params.params()
-                    )
+                
+                # Static catalogs: use get_items() instead of search()
+                if self.catalog_type == CatalogType.STATIC.value:
+                    logger.info("Using static catalog navigation (recursive get_items)")
+                    
+                    # For static catalogs with collection selected: use collection URL directly
+                    catalog_url = self.url
+                    if self.search_params and hasattr(self.search_params, 'collection_url') and self.search_params.collection_url:
+                        catalog_url = self.search_params.collection_url
+                        logger.info(f"🎯 Using collection-specific URL: {catalog_url}")
+                    else:
+                        logger.info(f"🌐 Using root catalog URL: {catalog_url}")
+                    
+                    try:
+                        # Re-open client with the appropriate URL (root or collection)
+                        if catalog_url != self.url:
+                            logger.info(f"Opening new client for collection URL...")
+                            if stac_io:
+                                from ..lib.pystac_client import Client
+                                collection_client = Client.from_file(catalog_url, stac_io=stac_io, headers=pystac_auth.get('headers', {}))
+                            else:
+                                collection_client = Client.open(catalog_url, headers=pystac_auth.get('headers', {}))
+                            logger.info(f"Client opened for collection")
+                        else:
+                            collection_client = self.client
+                        
+                        # Get collection filter from search params if available
+                        collection_filter = None
+                        if self.search_params and hasattr(self.search_params, 'collections') and self.search_params.collections:
+                            collection_filter = self.search_params.collections
+                            logger.info(f"📋 Collection filter provided: {collection_filter}")
+                            logger.info(f"📋 Filter type: {type(collection_filter)}, Length: {len(collection_filter)}")
+                        else:
+                            logger.info("📋 No collection filter - will search all collections")
+                        
+                        # Use recursive navigation for hierarchical static catalogs
+                        items = get_all_items_recursive(
+                            collection_client,  # Use collection-specific client if available 
+                            max_items=100, 
+                            max_depth=3,
+                            collection_filter=collection_filter
+                        )
+                        
+                        # Convert pystac.Item objects to models.Item objects
+                        self.response = [self._prepare_single_item(item) for item in items if item]
+                        # Filter out None results
+                        self.response = [r for r in self.response if r is not None]
+                        
+                        # Create pagination object for static catalogs
+                        self.pagination = ResourcePagination(
+                            total_items=len(self.response),
+                            total_pages=1,
+                            current_page=1,
+                            page_size=len(self.response)
+                        )
+                        logger.info(f"Static catalog fetch completed: {len(self.response)} items")
+                    except Exception as e:
+                        error_msg = (
+                            f"Failed to retrieve items from static catalog.\n\n"
+                            f"Error: {str(e)}\n\n"
+                            f"Static catalogs use hierarchical navigation (rel='child' and rel='item' links). "
+                            f"Please verify the catalog URL is correct and accessible."
+                        )
+                        logger.error(f"Static catalog error: {str(e)}")
+                        raise Exception(error_msg) from e
                 else:
-                    response = self.client.search()
-                self.response = self.prepare_items_results(
-                    response
-                )
-                logger.info(f"Feature search completed: {len(self.response) if isinstance(self.response, list) else 'unknown'} results")
+                    # API catalogs: use search()
+                    logger.info("Using STAC API search")
+                    try:
+                        if self.search_params:
+                            response = self.client.search(
+                                **self.search_params.params()
+                            )
+                        else:
+                            response = self.client.search()
+                        self.response = self.prepare_items_results(
+                            response
+                        )
+                        logger.info(f"Feature search completed: {len(self.response) if isinstance(self.response, list) else 'unknown'} results")
+                    except NotImplementedError as e:
+                        # Automatic fallback: try static catalog mode
+                        logger.warning(f"API search not implemented (NotImplementedError): {str(e)}")
+                        if not self._try_static_fallback():
+                            error_msg = (
+                                f"This catalog does not support search operations.\n\n"
+                                f"The URL '{self.url}' appears to be a static STAC catalog (JSON file), "
+                                f"not a STAC API endpoint.\n\n"
+                                f"Please edit this connection and change 'Catalog Type' to 'Static Catalog (hierarchical)'."
+                            )
+                            logger.error(f"NotImplementedError: {str(e)}")
+                            logger.error(f"URL: {self.url}")
+                            logger.error(error_msg)
+                            raise Exception(error_msg) from e
 
             elif self.resource_type == \
                     ResourceType.COLLECTION:
@@ -205,9 +419,41 @@ class ContentFetcherTask(QgsTask):
             log(str(err))
             self.error = str(err)
         except Exception as err:
-            logger.critical(f"Unexpected error in ContentFetcherTask: {type(err).__name__}: {str(err)}", exc_info=True)
-            log(f"Unexpected error: {str(err)}")
-            self.error = str(err)
+            error_str = str(err)
+            logger.critical(f"Unexpected error in ContentFetcherTask: {type(err).__name__}: {error_str}", exc_info=True)
+            
+            # Check if error is related to /search endpoint (likely static catalog)
+            # Common patterns: "Operation canceled", "HTTP 4xx/5xx", "/search" in error
+            is_search_error = (
+                self.resource_type == ResourceType.FEATURE and
+                self.catalog_type != CatalogType.STATIC.value and
+                ('/search' in error_str.lower() or 
+                 'operation canceled' in error_str.lower() or
+                 'http 400' in error_str.lower() or
+                 'http 404' in error_str.lower() or
+                 'http 405' in error_str.lower() or  # Method Not Allowed
+                 'http 501' in error_str.lower() or
+                 'not found' in error_str.lower() or
+                 'method not allowed' in error_str.lower())
+            )
+            
+            if is_search_error:
+                logger.warning(f"Search endpoint error detected, attempting static catalog fallback")
+                logger.info(f"Original error: {error_str}")
+                if self._try_static_fallback():
+                    # Fallback succeeded, return success
+                    return self.response is not None
+                else:
+                    # Fallback failed, set error message
+                    self.error = (
+                        f"Failed to access search endpoint.\n\n"
+                        f"Error: {error_str}\n\n"
+                        f"This catalog may be a static STAC catalog. "
+                        f"Please try changing the connection type to 'Static Catalog (hierarchical)'."
+                    )
+            else:
+                log(f"Unexpected error: {error_str}")
+                self.error = error_str
 
         return self.response is not None
 
@@ -391,61 +637,79 @@ class ContentFetcherTask(QgsTask):
         items_list = items_collection.items if items_collection else []
 
         for item in items_list:
-            try:
-                properties_datetime = item.properties.get("datetime")
-
-                item_datetime = parser.parse(
-                    properties_datetime
-                ) if properties_datetime else None
-
-                properties_start_date = item.properties.get("start_date")
-                start_date = parser.parse(
-                    properties_start_date,
-                ) if properties_start_date else None
-
-                properties_end_date = item.properties.get("end_date")
-
-                end_date = parser.parse(
-                    properties_end_date
-                ) if properties_end_date else None
-
-                cloud_cover = item.properties.get("eo:cloud_cover")
-
-                properties = ResourceProperties(
-                    resource_datetime=item_datetime,
-                    eo_cloud_cover=cloud_cover,
-                    start_date=start_date,
-                    end_date=end_date
-                )
-            except Exception as e:
-                log(
-                    f"Error in parsing item properties datetime"
-                )
-            assets = []
-            for key, asset in item.assets.items():
-                title = asset.title if asset.title else key
-                item_asset = ResourceAsset(
-                    href=asset.href,
-                    title=title,
-                    description=asset.description,
-                    type=asset.media_type,
-                    roles=asset.roles or []
-                )
-                assets.append(item_asset)
-            item_result = Item(
-                id=item.id,
-                item_uuid=uuid.uuid4(),
-                properties=properties,
-                collection=item.collection_id,
-                assets=assets,
-                stac_object=item,
-
-            )
-            if item.geometry:
-                item_result.geometry = item.geometry
-            items.append(item_result)
+            item_result = self._prepare_single_item(item)
+            if item_result:
+                items.append(item_result)
 
         return items
+    
+    def _prepare_single_item(self, item):
+        """
+        Prepare a single pystac.Item into a models.Item object.
+        
+        :param item: pystac.Item object
+        :type item: pystac.Item
+        
+        :returns: Prepared Item object or None if error
+        :rtype: models.Item or None
+        """
+        try:
+            properties_datetime = item.properties.get("datetime")
+
+            item_datetime = parser.parse(
+                properties_datetime
+            ) if properties_datetime else None
+
+            properties_start_date = item.properties.get("start_date")
+            start_date = parser.parse(
+                properties_start_date,
+            ) if properties_start_date else None
+
+            properties_end_date = item.properties.get("end_date")
+
+            end_date = parser.parse(
+                properties_end_date
+            ) if properties_end_date else None
+
+            cloud_cover = item.properties.get("eo:cloud_cover")
+
+            properties = ResourceProperties(
+                resource_datetime=item_datetime,
+                eo_cloud_cover=cloud_cover,
+                start_date=start_date,
+                end_date=end_date
+            )
+        except Exception as e:
+            log(
+                f"Error in parsing item properties datetime: {e}"
+            )
+            properties = None
+            
+        assets = []
+        for key, asset in item.assets.items():
+            title = asset.title if asset.title else key
+            item_asset = ResourceAsset(
+                href=asset.href,
+                title=title,
+                description=asset.description,
+                type=asset.media_type,
+                roles=asset.roles or []
+            )
+            assets.append(item_asset)
+            
+        item_result = Item(
+            id=item.id,
+            item_uuid=uuid.uuid4(),
+            properties=properties,
+            collection=item.collection_id,
+            assets=assets,
+            stac_object=item,
+        )
+        
+        if item.geometry:
+            item_result.geometry = item.geometry
+            
+        return item_result
 
     def prepare_conformance_results(self, conformance):
         """ Prepares the fetched conformance classes

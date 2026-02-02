@@ -80,6 +80,9 @@ def config_defaults_catalogs():
         capability = ApiCapability(catalog["capability"]) \
             if catalog["capability"] else None
         
+        # Get catalog_type (default to 'api' for existing catalogs)
+        catalog_type = catalog.get("catalog_type", "api")
+        
         # Always add if not exists (allows adding new catalogs in updates)
         if not settings_manager.is_connection(connection_id):
             connection_settings = ConnectionSettings(
@@ -90,6 +93,7 @@ def config_defaults_catalogs():
                 collections=[],
                 conformances=[],
                 capability=capability,
+                catalog_type=catalog_type,
                 created_date=datetime.datetime.now(),
                 auth_config=None,
                 sas_subscription_key=None,

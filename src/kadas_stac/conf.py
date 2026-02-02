@@ -69,6 +69,7 @@ class ConnectionSettings:
     conformances: list
     search_items: list
     capability: ApiCapability
+    catalog_type: str  # 'api' or 'static'
     sas_subscription_key: str
     created_date: datetime.datetime = datetime.datetime.now()
     auth_config: typing.Optional[str] = None
@@ -107,6 +108,7 @@ class ConnectionSettings:
             capability_value = settings.value("capability", defaultValue=None)
             capability = ApiCapability(capability_value) \
                 if capability_value else None
+            catalog_type_value = settings.value("catalog_type", defaultValue="api")
             created_date = datetime.datetime.strptime(
                 settings.value("created_date"),
                 "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -114,6 +116,7 @@ class ConnectionSettings:
             auth_cfg = settings.value("auth_config").strip()
         except AttributeError:
             created_date = datetime.datetime.now()
+            catalog_type_value = "api"
 
         return cls(
             id=uuid.UUID(identifier),
@@ -123,6 +126,7 @@ class ConnectionSettings:
             collections=collections,
             conformances=conformances,
             capability=capability,
+            catalog_type=catalog_type_value,
             sas_subscription_key=settings.value("sas_subscription_key"),
             created_date=created_date,
             auth_config=auth_cfg,
@@ -533,6 +537,7 @@ class SettingsManager(QtCore.QObject):
             settings.setValue("url", connection_settings.url)
             settings.setValue("page_size", connection_settings.page_size)
             settings.setValue("capability", capability)
+            settings.setValue("catalog_type", connection_settings.catalog_type)
             settings.setValue(
                 "sas_subscription_key",
                 connection_settings.sas_subscription_key

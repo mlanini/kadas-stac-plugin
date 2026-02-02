@@ -252,6 +252,9 @@ class ConnectionDialog(QtWidgets.QDialog, DialogUi):
         search_items = []
 
         sas_subscription_key = self.sas_subscription_key.text()
+        
+        # Get catalog type from combo box (0 = API, 1 = Static)
+        catalog_type = "api" if self.catalog_type_combo.currentIndex() == 0 else "static"
 
         if self.capabilities.currentText() != "":
             capability = ApiCapability(self.capabilities.currentText())
@@ -263,6 +266,7 @@ class ConnectionDialog(QtWidgets.QDialog, DialogUi):
             page_size=self.page_size.value(),
             collections=[],
             capability=capability,
+            catalog_type=catalog_type,
             conformances=self.conformance,
             created_date=datetime.datetime.now(),
             auth_config=self.auth_config.configId(),
@@ -286,6 +290,11 @@ class ConnectionDialog(QtWidgets.QDialog, DialogUi):
             connection_settings.capability.value
         ) if connection_settings.capability else 0
         self.capabilities.setCurrentIndex(capability_index)
+        
+        # Load catalog type (default to 'api' if not set)
+        catalog_type_index = 0 if connection_settings.catalog_type == "api" else 1
+        self.catalog_type_combo.setCurrentIndex(catalog_type_index)
+        
         if connection_settings.conformances:
             self.load_conformances(connection_settings.conformances)
 
@@ -302,6 +311,9 @@ class ConnectionDialog(QtWidgets.QDialog, DialogUi):
         sas_subscription_key = None
         if self.sas_subscription_key.text() != "":
             sas_subscription_key = self.sas_subscription_key.text()
+        
+        # Get catalog type from combo box (0 = API, 1 = Static)
+        catalog_type = "api" if self.catalog_type_combo.currentIndex() == 0 else "static"
 
         connection_settings = ConnectionSettings(
             id=connection_id,
@@ -310,6 +322,7 @@ class ConnectionDialog(QtWidgets.QDialog, DialogUi):
             page_size=self.page_size.value(),
             collections=[],
             capability=capability,
+            catalog_type=catalog_type,
             sas_subscription_key=sas_subscription_key,
             conformances=self.conformance,
             created_date=datetime.datetime.now(),

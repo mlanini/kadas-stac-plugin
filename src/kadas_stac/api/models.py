@@ -39,6 +39,15 @@ class ApiCapability(enum.Enum):
     SUPPORT_SAS_TOKEN = "Support SAS Token"
 
 
+class CatalogType(enum.Enum):
+    """ Types of STAC catalogs supported by the plugin:
+    - API: STAC API endpoints with /search capability (dynamic queries)
+    - STATIC: Static STAC catalogs (JSON files, hierarchical navigation)
+    """
+    API = 'api'
+    STATIC = 'static'
+
+
 class AssetRoles(enum.Enum):
     """ STAC Item assets roles defined as outlined in
     https://github.com/radiantearth/stac-api-spec/blob/
@@ -327,6 +336,7 @@ class ItemSearch:
     page: typing.Optional[int] = 1
     page_size: typing.Optional[int] = 10
     collections: typing.Optional[list] = None
+    collection_url: typing.Optional[str] = None  # For static catalogs: direct URL to collection JSON
     datetime: typing.Optional[QtCore.QDateTime] = None
     spatial_extent: typing.Optional[QgsRectangle] = None
     start_datetime: typing.Optional[QtCore.QDateTime] = None

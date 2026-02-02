@@ -437,7 +437,7 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
                     reply = fetcher.reply()
                     if reply and reply.error() == 0:
                         # Write downloaded content to file
-                        content = reply.content()
+                        content = reply.readAll()
                         with open(output, 'wb') as f:
                             f.write(content.data())
                         

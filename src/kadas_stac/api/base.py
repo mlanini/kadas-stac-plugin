@@ -40,6 +40,7 @@ class BaseClient(QtCore.QObject):
     url: str
     content_task: ContentFetcherTask
     capability: ApiCapability
+    catalog_type: str  # 'api' or 'static'
 
     conformance_received = QtCore.pyqtSignal(
         list,
@@ -73,6 +74,7 @@ class BaseClient(QtCore.QObject):
             *args,
             auth_config: typing.Optional[str] = None,
             capability=None,
+            catalog_type: str = "api",
             **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -80,6 +82,7 @@ class BaseClient(QtCore.QObject):
         self.url = url.rstrip("/")
         self.content_task = None
         self.capability = capability
+        self.catalog_type = catalog_type
 
     @classmethod
     def from_connection_settings(
@@ -98,7 +101,8 @@ class BaseClient(QtCore.QObject):
         return cls(
             url=connection_settings.url,
             auth_config=connection_settings.auth_config,
-            capability=connection_settings.capability
+            capability=connection_settings.capability,
+            catalog_type=connection_settings.catalog_type
         )
 
     def get_items(
@@ -117,6 +121,7 @@ class BaseClient(QtCore.QObject):
             search_params=item_search,
             resource_type=ResourceType.FEATURE,
             api_capability=self.capability,
+            catalog_type=self.catalog_type,
             response_handler=self.handle_items,
             error_handler=self.handle_error,
             auth_config=self.auth_config,

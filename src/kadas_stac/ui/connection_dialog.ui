@@ -53,6 +53,30 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_catalog_type">
+        <property name="text">
+         <string>Catalog Type</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QComboBox" name="catalog_type_combo">
+        <property name="toolTip">
+         <string>Select catalog type: API for STAC API endpoints with /search, Static for static JSON catalogs</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>STAC API (dynamic search)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Static Catalog (hierarchical)</string>
+         </property>
+        </item>
+       </widget>
+      </item>
       <item row="4" column="0" rowspan="3" colspan="3">
        <widget class="QgsCollapsibleGroupBox" name="collections_group">
         <property name="title">

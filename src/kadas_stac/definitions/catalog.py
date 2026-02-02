@@ -3,9 +3,16 @@
     Definitions for all pre-installed STAC API catalog connections
 """
 
-from ..api.models import ApiCapability
+from ..api.models import ApiCapability, CatalogType
 
 CATALOGS = [
+    {
+        "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Swiss Federal Geodata",
+        "url": "https://data.geo.admin.ch/api/stac/v1/",
+        "selected": False,
+        "capability": None,
+    },
     {
         "id": "07e3e9dd-cbad-4cf6-8336-424b88abf8f3",
         "name": "Microsoft Planetary Computer STAC API",
@@ -41,13 +48,6 @@ CATALOGS = [
         "selected": False,
         "capability": None,
     },
-    {
-        "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        "name": "Swiss Federal Geodata",
-        "url": "https://data.geo.admin.ch/api/stac/v1/",
-        "selected": False,
-        "capability": None,
-    },
     # Additional verified STAC API 1.0 catalogs
     {
         "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
@@ -63,20 +63,9 @@ CATALOGS = [
         "selected": False,
         "capability": None,
     },
-    {
-        "id": "d3e4f5a6-b7c8-4d9e-0f1a-2b3c4d5e6f7a",
-        "name": "ESA Catalog",
-        "url": "https://eocat.esa.int/eo-catalogue/",
-        "selected": False,
-        "capability": None,
-    },
-    {
-        "id": "e4f5a6b7-c8d9-4e0f-1a2b-3c4d5e6f7a8b",
-        "name": "FedEO Clearinghouse (CEOS)",
-        "url": "https://fedeo.ceos.org/",
-        "selected": False,
-        "capability": None,
-    },
+    # NOTE: ESA Catalog (eocat.esa.int) removed - it's an OpenSearch catalog, not STAC API
+    # Use "Copernicus Data Space Ecosystem" instead for ESA STAC API access
+    # NOTE: FedEO Clearinghouse (fedeo.ceos.org) removed - it's an OpenSearch catalog, not STAC API
     {
         "id": "f5a6b7c8-d9e0-4f1a-2b3c-4d5e6f7a8b9c",
         "name": "Canadian Geospatial Data Collections",
@@ -153,6 +142,23 @@ CATALOGS = [
         "url": "https://hda.data.destination-earth.eu/stac/v2",
         "selected": False,
         "capability": None,
+    },
+    # Static STAC Catalogs (hierarchical navigation, no /search endpoint)
+    {
+        "id": "f8a9b0c1-d2e3-4f5a-6b7c-8d9e0f1a2b3c",
+        "name": "Vantor Open Data (Static)",
+        "url": "https://maxar-opendata.s3.amazonaws.com/events/catalog.json",
+        "selected": False,
+        "capability": None,
+        "catalog_type": CatalogType.STATIC.value,
+    },
+    {
+        "id": "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+        "name": "USGS Landsat (Static)",
+        "url": "https://landsatlook.usgs.gov/stac-browser/catalog.json",
+        "selected": False,
+        "capability": None,
+        "catalog_type": CatalogType.STATIC.value,
     },
 ]
 

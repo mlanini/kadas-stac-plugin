@@ -47,6 +47,7 @@ from ..api.client import Client
 
 from .result_item_model import ItemsModel, ItemsSortFilterProxyModel
 from .json_highlighter import JsonHighlighter
+from ..logger import get_logger
 
 from ..utils import (
     open_folder,
@@ -511,6 +512,31 @@ class KadasStacWidget(QtWidgets.QWidget, WidgetUi):
             if use_end_date else None
 
         collections = self.get_selected_collections()
+        
+        # For static catalogs: get the collection URL directly
+        collection_url = None
+        current_connection = settings_manager.get_current_connection()
+        if current_connection and current_connection.catalog_type == "static":
+            if collections and len(collections) == 1:  # Single collection selected
+                # Get the collection object to extract its 'self' link
+                collection_id = collections[0]
+                try:
+                    collection_settings = settings_manager.get_collection(
+                        current_connection.id,
+                        collection_id
+                    )
+                    if collection_settings and hasattr(collection_settings, 'links'):
+                        # Find the 'self' link
+                        for link in collection_settings.links:
+                            if hasattr(link, 'rel') and link.rel == 'self' and hasattr(link, 'href'):
+                                collection_url = link.href
+                                logger = get_logger()
+                                logger.info(f"Found collection self URL: {collection_url}")
+                                break
+                except Exception as e:
+                    logger = get_logger()
+                    logger.error(f"Error getting collection URL: {e}")
+        
         page_size = settings_manager.get_current_connection().page_size
         spatial_extent = self.extent_box.outputExtent() \
             if self.extent_box.isChecked() else None
@@ -539,6 +565,7 @@ class KadasStacWidget(QtWidgets.QWidget, WidgetUi):
         self.api_client.get_items(
             ItemSearch(
                 collections=collections,
+                collection_url=collection_url,  # Pass collection URL for static catalogs
                 page_size=page_size,
                 page=self.page,
                 start_datetime=start_dte,

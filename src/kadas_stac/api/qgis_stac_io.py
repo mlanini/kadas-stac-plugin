@@ -289,6 +289,7 @@ class QgisStacApiIO(DefaultStacIO):
                 raise Exception(f"HTTP {status_code}: {error_msg}")
         
         # Get response content
+        # QgsNetworkReplyContent.content() returns QByteArray that needs bytes() conversion
         content = reply.content()
         text = bytes(content).decode('utf-8')
         

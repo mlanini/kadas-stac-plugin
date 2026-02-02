@@ -15,8 +15,18 @@ All notable changes to the KADAS STAC Plugin.
 - **Referer Header**: KADAS-compatible referer support
 - **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py)
 - **Logging System**: File-based logging with rotation (`~/.kadas/stac.log`)
-- **21 STAC API Catalogs**: Added 14 new verified API endpoints (Copernicus, ESA, NASA, etc.)
+- **19 STAC API Catalogs**: Verified STAC API 1.0+ endpoints (removed 2 OpenSearch catalogs)
 - **S3 Protocol Support**: Direct access to S3 assets via GDAL Virtual File System (`/vsis3/`)
+- **Static STAC Catalogs**: Support for hierarchical static catalogs (JSON files)
+  - New `CatalogType` enum (API vs STATIC)
+  - UI selector in connection dialog
+  - **Recursive navigation**: Automatically descends into sub-collections to find all items
+  - Automatic detection and routing
+  - **Automatic fallback**: API mode tries static mode if no search link found
+  - **Intelligent fallback**: Detects "Operation canceled", HTTP 400/404/405/501, and automatically switches to static mode
+  - Examples: Maxar Open Data, USGS Landsat, Digital Earth Africa
+  - Max 100 items limit for safety (configurable max_depth=3)
+- **Collection URL Navigation**: For static catalogs with selected collection, opens catalog at collection URL (scopes search automatically)
 
 ### Changed
 
@@ -27,6 +37,7 @@ All notable changes to the KADAS STAC Plugin.
 - **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface
 - **Catalog Loading**: Now always checks for new catalogs on plugin load (allows updates)
 - **Asset Download**: Replaced `processing.run()` with `QgsNetworkContentFetcher` (Qt native)
+- **Error Handling**: Improved fallback mechanism with detailed logging and user-friendly messages
 
 ### Fixed
 
@@ -35,9 +46,13 @@ All notable changes to the KADAS STAC Plugin.
 - **Dock Panel Behavior**: Panel now opens immediately in right dock area (like vantor plugin)
 - **S3 Protocol Error**: S3 URLs automatically converted to GDAL VSI format (`s3://` → `/vsis3/`)
 - **Download Error**: Fixed `module 'processing' has no attribute 'run'` error
+- **Download Error**: Fixed `'QNetworkReply' object has no attribute 'content'` (now uses `readAll()`)
 - **AttributeError**: `QgsNetworkReplyContent.url` → using `QNetworkRequest.url()`
 - **AttributeError**: Added `conforms_to()` and `assert_conforms_to()` methods
 - **AttributeError**: Added `get_pages()` iterator for STAC API pagination
+- **Operation Canceled Error**: Digital Earth Africa and similar catalogs now automatically fall back to static mode
+- **HTTP 405 Error**: Removed incompatible OpenSearch catalogs (ESA Catalog, FedEO) - use Copernicus Data Space instead
+- **Collection Filter**: Static catalogs with collection selected now open catalog at collection URL (proper scoping)
 - **SSL Errors**: No more "SSL module not available" errors
 - **Protocol Errors**: Better handling with URL normalization
 - **Proxy Detection**: Auto-detects VPN and corporate proxy
@@ -49,7 +64,7 @@ All notable changes to the KADAS STAC Plugin.
 - No external runtime dependencies (pystac/pystac_client bundled)
 - Lazy proxy initialization with global caching
 - Comprehensive logging for debugging
-- Catalog count: 21 STAC API endpoints (removed 1 static catalog)
+- Catalog count: 19 verified STAC API 1.0+ endpoints (removed 2 OpenSearch catalogs)
 - S3 assets loaded via GDAL VSI (supports public S3 buckets)
 - S3 downloads use GDAL CreateCopy for efficient file transfer
 
