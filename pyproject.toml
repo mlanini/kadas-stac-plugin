@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kadas-stac-plugin"
-version = "1.1.2"
+version = "0.1.0"
 description = "KADAS/QGIS plugin for reading STAC API catalogs"
 authors = ["Kartoza <info@kartoza.com>"]
 license = "GPL v3.0"
@@ -39,9 +39,9 @@ tags = [
 category = "plugins, web"
 hasProcessingProvider = "no"
 about = """\
-Adds functionality to search, load and manage STAC API resources inside KADAS and QGIS.
+Adds functionality to search, load and manage STAC API resources inside KADAS/QGIS.
 Adapted for KADAS Albireo 2 compatibility.
-Originally sponsored by Microsoft.
+Originally developed by Kartoza and sponsored by Microsoft.
 """
 # changelog: dynamically pulled from the docs/plugin/changelog.txt file
 # description: dynamically pulled from the tool.poetry.description section

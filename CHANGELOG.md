@@ -2,12 +2,27 @@
 
 All notable changes to the KADAS STAC Plugin.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ---
 
-## [1.1.2] - 2026-02-02
+## [Unreleased]
+
+### Changed
+- Repository forked from [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) v0.6.0
+- Renamed from "QGIS STAC Plugin" to "KADAS STAC Plugin"
+- Documentation restructured for KADAS Albireo 2
+
+---
+
+## [0.1.0] - 2026-02-03
+
+Initial KADAS fork release based on qgis-stac-plugin v0.6.0.
 
 ### Added
 
+- **KADAS Albireo 2 Compatibility**: Full compatibility with KADAS Albireo 2.x
 - **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` (100% KADAS compatible)
 - **Proxy Handler**: Automatic proxy detection from QGIS Settings
 - **Auto-docking**: Plugin docks to right panel on startup (immediate visibility)
@@ -64,81 +79,18 @@ All notable changes to the KADAS STAC Plugin.
 - No external runtime dependencies (pystac/pystac_client bundled)
 - Lazy proxy initialization with global caching
 - Comprehensive logging for debugging
-- Catalog count: 19 verified STAC API 1.0+ endpoints (removed 2 OpenSearch catalogs)
+- Catalog count: 19 verified STAC API 1.0+ endpoints
 - S3 assets loaded via GDAL VSI (supports public S3 buckets)
 - S3 downloads use GDAL CreateCopy for efficient file transfer
 
----- **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface
+---
 
-- **Catalog Loading**: Now always checks for new catalogs on plugin load (allows updates)- **URL Normalization**: Auto-prefix `https://` if missing
+## Upstream History (qgis-stac-plugin)
 
+For changes prior to the KADAS fork, see the [original repository](https://github.com/stac-utils/qgis-stac-plugin/blob/main/CHANGELOG.md).
 
+Last upstream version: **v0.6.0**
 
-### Fixed- **Referer Header**: KADAS-compatible referer support
-
-
-
-- **Static Catalog Error**: Removed Maxar Open Data (static catalog, not STAC API)- **Network Tests**: Comprehensive test suite (quick_network_test.py, test_network.py)
-
-- **Missing Catalogs**: Fixed issue where new catalogs weren't added after first install
-
-- **AttributeError**: `QgsNetworkReplyContent.url` → using `QNetworkRequest.url()`- **Logging System**: File-based logging with rotation (`~/.kadas/stac.log`)### KADAS Albireo 2 Optimization### KADAS Albireo 2 Optimization
-
-- **AttributeError**: Added `conforms_to()` and `assert_conforms_to()` methods
-
-- **AttributeError**: Added `get_pages()` iterator for STAC API pagination- **22 STAC Catalogs**: Added 15 new verified catalogs (Copernicus, ESA, NASA, etc.)
-
-- **SSL Errors**: No more "SSL module not available" errors
-
-- **Protocol Errors**: Better handling with URL normalization
-
-- **Proxy Detection**: Auto-detects VPN and corporate proxy
-
-- **VPN Support**: Works with corporate VPNs and SSL inspection### Changed
-
-
-
-### Technical#### Added#### Added
-
-
-
-- Network patterns 100% identical to KADAS Albireo 2 catalog providers- **Network Stack**: Switched from Python requests to Qt `QgsNetworkAccessManager`
-
-- No external runtime dependencies (pystac/pystac_client bundled)
-
-- Lazy proxy initialization with global caching- **SSL Handling**: Uses Qt SSL stack exclusively (no Python SSL module dependency)- **Auto-docking**: Plugin automatically docks to right panel on startup- **Auto-docking**: Plugin automatically docks to right panel on startup
-
-- Comprehensive logging for debugging
-
-- Catalog count: 21 STAC API endpoints (removed 1 static catalog)- **Proxy Configuration**: Reads from QGIS Settings (Settings → Network → Proxy)
-
-
-
----- **Documentation**: Consolidated to 4 files (README, DEVELOPMENT, TESTING, CHANGELOG)- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)- **Clean unload**: Complete cleanup when plugin is deactivated (disconnect signals, deleteLater)
-
-
-
-## [1.1.0] - 2022-07-18- **UI Branding**: Renamed from QGIS STAC to KADAS STAC throughout interface
-
-
-
-### Features- **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` instead of requests library- **Qt Network Stack**: Custom `QgisStacApiIO` using `QgsNetworkAccessManager` instead of requests library
-
-
-
-- Data-driven filtering using STAC Queryables### Fixed
-
-- Multiple assets and footprints loading/downloading
-
-- Minimizable plugin main window- **Proxy Handler**: Automatic proxy detection based on QGIS Settings (swisstopo/topo-rapidmapping pattern)- **Proxy Handler**: Automatic proxy detection based on QGIS Settings (swisstopo/topo-rapidmapping pattern)
-
-- Subscription key usage for SAS-based connections
-
-- Support for COPC and netCDF layers- **AttributeError**: `QgsNetworkReplyContent.url` → using `QNetworkRequest.url()`
-
-- New collection information dialog
-
-- Auto-load assets after downloading- **AttributeError**: Added `conforms_to()` and `assert_conforms_to()` methods- **URL Normalization**: Auto-prefix `https://` if missing from URLs- **URL Normalization**: Auto-prefix `https://` if missing from URLs
 
 - Support for CQL2-JSON filter language
 
