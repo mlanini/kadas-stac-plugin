@@ -288,8 +288,24 @@ Plugin automatically:
 2. Converts to GDAL VSI format: `/vsis3/...`
 3. Loads directly (no download)
 
+**Copernicus Data Space Ecosystem**:
+
+Assets use S3 URLs from eodata bucket:
+```
+s3://eodata/Sentinel-2/.../T32TPS_20240115T103339_B02_10m.jp2
+```
+
+Plugin automatically:
+1. Detects Copernicus catalog (dataspace.copernicus.eu)
+2. Configures GDAL S3 endpoint: `eodata.dataspace.copernicus.eu`
+3. Uses anonymous access for public datasets
+4. Loads directly via `/vsis3/eodata/...`
+
+**Note**: If you get "AWS_SECRET_ACCESS_KEY not defined" error, the plugin will now automatically configure GDAL for anonymous Copernicus access.
+
 **Troubleshooting S3**:
-- Error: "S3 access denied" → Token expired, retry
+- Error: "S3 access denied" → Token expired (Planetary Computer), retry
+- Error: "AWS credentials not found" → Fixed in v0.1.1+ for Copernicus
 - Slow loading → S3 bucket far from your location
 
 ### Authentication

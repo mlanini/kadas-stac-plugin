@@ -329,14 +329,27 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
 
         url = self.sign_asset_href(asset.href)
         
+        # Check if this is Copernicus
+        connection = settings_manager.get_current_connection()
+        is_copernicus = (connection and 
+                        'dataspace.copernicus.eu' in connection.url.lower())
+        
         # Convert S3 URLs to GDAL VSI format for direct access
         if url.startswith('s3://'):
             # Convert s3://bucket/key to /vsis3/bucket/key
             vsi_url = url.replace('s3://', '/vsis3/')
-            self.main_widget.show_message(
-                tr("Converting S3 URL to GDAL VSI format: {}").format(vsi_url),
-                Qgis.Info
-            )
+            
+            if is_copernicus:
+                self.main_widget.show_message(
+                    tr("Downloading from Copernicus S3 via OAuth2: {}").format(vsi_url),
+                    Qgis.Info
+                )
+            else:
+                self.main_widget.show_message(
+                    tr("Converting S3 URL to GDAL VSI format: {}").format(vsi_url),
+                    Qgis.Info
+                )
+            
             url = vsi_url
         
         extension = Path(asset.href).suffix
@@ -385,6 +398,17 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
                     from osgeo import gdal
                     gdal.UseExceptions()
                     
+                    # Configure GDAL for S3 access
+                    s3_configured = self._configure_gdal_s3_access(url)
+                    
+                    if not s3_configured:
+                        # S3 access failed - authentication issue
+                        raise Exception(
+                            "S3 access authentication failed. "
+                            "For Copernicus, please ensure OAuth2 is configured in connection settings. "
+                            "Check that Client ID and Secret are correct."
+                        )
+                    
                     # Open source VSI file
                     src_ds = gdal.Open(url)
                     if src_ds is None:
@@ -423,10 +447,30 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
                         self.load_asset(asset)
                         
                 except Exception as e:
+                    error_msg = str(e)
                     self.update_inputs(True)
-                    self.main_widget.show_message(
-                        tr("Error downloading S3 file via GDAL VSI: {}").format(str(e))
-                    )
+                    
+                    # Check if this is a Copernicus auth issue
+                    connection = settings_manager.get_current_connection()
+                    is_copernicus = (connection and 
+                                    'dataspace.copernicus.eu' in connection.url.lower())
+                    
+                    if is_copernicus and ('InvalidAccessKeyId' in error_msg or 
+                                         'AWS' in error_msg or 
+                                         'authentication' in error_msg.lower()):
+                        self.main_widget.show_message(
+                            tr("Failed to access Copernicus S3 bucket. Please verify:\n"
+                               "1. OAuth2 is configured in connection settings\n"
+                               "2. Client ID and Secret are correct\n"
+                               "3. OAuth2 token is valid (not expired)\n"
+                               "Error: {}").format(error_msg),
+                            Qgis.Critical
+                        )
+                    else:
+                        self.main_widget.show_message(
+                            tr("Error downloading S3 file via GDAL VSI: {}").format(error_msg),
+                            Qgis.Critical
+                        )
                 return
             
             # Standard HTTP/HTTPS download using QgsNetworkContentFetcher
@@ -504,6 +548,137 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
 
         return asset_href
 
+    def _get_copernicus_s3_credentials(self):
+        """Get temporary S3 credentials from Copernicus Data Space using OAuth2 token.
+        
+        :returns: Dict with 'access_id' and 'secret', or None if failed
+        :rtype: dict or None
+        """
+        import json
+        from qgis.core import QgsNetworkAccessManager, QgsAuthManager
+        from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
+        from qgis.PyQt.QtCore import QUrl, QEventLoop
+        
+        connection = settings_manager.get_current_connection()
+        if not connection or not connection.auth_config:
+            self.main_widget.show_message(
+                tr("No OAuth2 authentication configured for Copernicus connection"),
+                Qgis.Warning
+            )
+            return None
+        
+        try:
+            # Get OAuth2 access token from QGIS Auth Manager
+            auth_manager = QgsAuthManager.instance()
+            auth_config = connection.auth_config
+            
+            # Create request to S3 keys manager API
+            s3_keys_url = "https://s3-keys-manager.cloudferro.com/api/user/credentials"
+            request = QNetworkRequest(QUrl(s3_keys_url))
+            request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+            
+            # Update request with auth config (adds OAuth2 bearer token)
+            auth_manager.updateNetworkRequest(request, auth_config)
+            
+            # Send POST request
+            network_manager = QgsNetworkAccessManager.instance()
+            reply = network_manager.post(request, b"")
+            
+            # Wait for response
+            loop = QEventLoop()
+            reply.finished.connect(loop.quit)
+            loop.exec_()
+            
+            # Check response
+            if reply.error() == QNetworkReply.NoError:
+                response_data = reply.readAll().data().decode('utf-8')
+                credentials = json.loads(response_data)
+                
+                self.main_widget.show_message(
+                    tr("Temporary S3 credentials obtained from Copernicus"),
+                    Qgis.Info
+                )
+                
+                return credentials
+            else:
+                error_msg = reply.errorString()
+                self.main_widget.show_message(
+                    tr("Failed to get S3 credentials from Copernicus: {}").format(error_msg),
+                    Qgis.Critical
+                )
+                return None
+                
+        except Exception as e:
+            self.main_widget.show_message(
+                tr("Error obtaining Copernicus S3 credentials: {}").format(str(e)),
+                Qgis.Critical
+            )
+            return None
+
+    def _configure_gdal_s3_access(self, s3_url):
+        """Configure GDAL for S3 access based on the catalog.
+        
+        For Copernicus Data Space Ecosystem and other catalogs that require
+        authentication, this sets up GDAL configuration options.
+        
+        :param s3_url: S3 URL in /vsis3/ format
+        :type s3_url: str
+        
+        :returns: True if configuration successful, False if auth required but not available
+        :rtype: bool
+        """
+        from osgeo import gdal
+        
+        connection = settings_manager.get_current_connection()
+        
+        # Check if this is a Copernicus Data Space catalog
+        is_copernicus = (connection and 
+                        'dataspace.copernicus.eu' in connection.url.lower())
+        
+        # Check if URL is from eodata bucket (Copernicus)
+        is_eodata = '/vsis3/eodata/' in s3_url.lower()
+        
+        if is_copernicus or is_eodata:
+            # Copernicus Data Space S3 access requires OAuth2 token exchange
+            self.main_widget.show_message(
+                tr("Requesting temporary S3 credentials from Copernicus..."),
+                Qgis.Info
+            )
+            
+            # Get temporary S3 credentials from Copernicus
+            credentials = self._get_copernicus_s3_credentials()
+            
+            if credentials and 'access_id' in credentials and 'secret' in credentials:
+                # Configure GDAL with temporary credentials
+                gdal.SetConfigOption('AWS_ACCESS_KEY_ID', credentials['access_id'])
+                gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', credentials['secret'])
+                gdal.SetConfigOption('AWS_S3_ENDPOINT', 'eodata.dataspace.copernicus.eu')
+                gdal.SetConfigOption('AWS_HTTPS', 'YES')
+                gdal.SetConfigOption('AWS_VIRTUAL_HOSTING', 'FALSE')
+                
+                self.main_widget.show_message(
+                    tr("GDAL configured with temporary Copernicus S3 credentials"),
+                    Qgis.Info
+                )
+                return True
+            else:
+                # Failed to get credentials
+                self.main_widget.show_message(
+                    tr("Could not obtain S3 credentials. OAuth2 authentication may be required. "
+                       "Please configure OAuth2 in connection settings."),
+                    Qgis.Critical
+                )
+                return False
+            
+        else:
+            # For other S3 buckets, try anonymous access
+            gdal.SetConfigOption('AWS_NO_SIGN_REQUEST', 'YES')
+            self.main_widget.show_message(
+                tr("Configuring GDAL for anonymous S3 access"),
+                Qgis.Info
+            )
+            return True
+
     def download_progress(self, value):
         """Tracks the download progress of value and updates
         the info message when the download has finished
@@ -563,14 +738,36 @@ class AssetsDialog(QtWidgets.QDialog, DialogUi):
         current_asset_href = asset.href
         asset.href = self.sign_asset_href(asset.href)
         
+        # Check if this is Copernicus
+        connection = settings_manager.get_current_connection()
+        is_copernicus = (connection and 
+                        'dataspace.copernicus.eu' in connection.url.lower())
+        
         # Convert S3 URLs to GDAL VSI format for direct layer loading
         if asset.href.startswith('s3://'):
             # Convert s3://bucket/key to /vsis3/bucket/key (GDAL Virtual File System)
             asset.href = asset.href.replace('s3://', '/vsis3/')
-            self.main_widget.show_message(
-                tr("Loading S3 asset via GDAL VSI: {}").format(asset.title or asset.href),
-                Qgis.Info
-            )
+            
+            if is_copernicus:
+                self.main_widget.show_message(
+                    tr("Loading Copernicus S3 asset via OAuth2: {}").format(asset.title or asset.href),
+                    Qgis.Info
+                )
+            else:
+                self.main_widget.show_message(
+                    tr("Loading S3 asset via GDAL VSI: {}").format(asset.title or asset.href),
+                    Qgis.Info
+                )
+            
+            # Configure GDAL for S3 access (handles OAuth2 for Copernicus)
+            s3_configured = self._configure_gdal_s3_access(asset.href)
+            if not s3_configured:
+                self.main_widget.show_message(
+                    tr("Failed to configure S3 access. Please check OAuth2 settings for Copernicus "
+                       "or verify S3 bucket permissions."),
+                    Qgis.Critical
+                )
+                return  # Don't attempt to load if configuration failed
 
         if asset_type in raster_types:
             layer_type = QgsMapLayer.RasterLayer

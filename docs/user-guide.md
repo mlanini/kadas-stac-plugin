@@ -88,6 +88,62 @@ new connections the list is empty, users can click the **Get conformance classes
 classes. The above image shows the [Planetary Computer STAC API](https://planetarycomputer.microsoft.com/api/stac/v1)
 with a list of conformances classes that have already been fetched.
 
+### Configuring OAuth2 for Copernicus Data Space Ecosystem
+
+The [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu) provides access to Sentinel satellite data through their STAC API. To access S3 assets from Copernicus, you need to configure OAuth2 authentication.
+
+#### Step 1: Register for Copernicus Account
+
+1. Visit [https://dataspace.copernicus.eu](https://dataspace.copernicus.eu)
+2. Register for a free account
+3. Log in to the [Copernicus Dashboard](https://shapps.dataspace.copernicus.eu/dashboard)
+
+#### Step 2: Create OAuth2 Client Credentials
+
+1. In the Copernicus Dashboard, go to **User Settings** → **OAuth clients**
+2. Click **Create** to create a new OAuth client
+3. Provide a name for your client (e.g., "KADAS STAC Plugin")
+4. Select expiry date or choose "Never expire"
+5. **Important**: Do NOT select "Single-page application (SPA)" option
+6. Click **Create**
+7. **Copy both Client ID and Client Secret** immediately (the secret won't be shown again!)
+
+#### Step 3: Configure OAuth2 in QGIS Auth Manager
+
+1. In QGIS, go to **Settings** → **Options** → **Authentication**
+2. Click the green **+** button to add a new authentication configuration
+3. Select **Type**: `OAuth2`
+4. Configure the OAuth2 settings:
+   - **Name**: `Copernicus STAC` (or any descriptive name)
+   - **Grant Flow**: `Client Credentials`
+   - **Token URL**: `https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token`
+   - **Client ID**: Paste the Client ID from Step 2
+   - **Client Secret**: Paste the Client Secret from Step 2
+5. Click **OK** to save
+
+#### Step 4: Create Copernicus STAC Connection
+
+1. In the STAC API Browser plugin, click **New** connection
+2. Configure the connection:
+   - **Name**: `Copernicus Data Space`
+   - **URL**: `https://stac.dataspace.copernicus.eu/v1`
+   - **Authentication**: Select the OAuth2 configuration you created in Step 3
+3. Click **OK** to save
+
+#### Step 5: Using Copernicus S3 Assets
+
+Once configured, the plugin will automatically:
+
+1. Use OAuth2 to authenticate STAC API requests
+2. When loading or downloading S3 assets, exchange your OAuth2 token for temporary S3 credentials
+3. Configure GDAL to access the Copernicus `eodata` S3 bucket seamlessly
+
+**Note**: Temporary S3 credentials are requested automatically when needed and are valid for a limited time. If credentials expire during long sessions, the plugin will request new ones automatically.
+
+**Example S3 assets from Copernicus**:
+- `s3://eodata/Sentinel-2/MSI/L2A/2024/01/15/S2A_MSIL2A_*.SAFE/...`
+- `s3://eodata/Sentinel-1/SAR/SLC/2019/10/13/S1B_IW_SLC__*.SAFE/...`
+
 ### STAC API Items search
 
 #### Using the search filters

@@ -18,7 +18,7 @@ Browse and load geospatial data from [STAC API](https://stacspec.org/) catalogs 
 - 🔍 **Advanced Search**: Date range, spatial extent, cloud cover, collections
 - 🗺️ **Load Layers**: Add footprints or load assets (COG, GeoTIFF, GeoJSON)
 - 📥 **Download Manager**: Auto-download with layer loading, S3 support via GDAL VSI
-- 🔐 **Authentication**: Basic Auth, OAuth2, API Key (Planetary Computer SAS tokens)
+- 🔐 **Authentication**: Basic Auth, OAuth2, API Key (Planetary Computer SAS tokens, Copernicus OAuth2→S3)
 - 🌐 **Enterprise Ready**: Automatic proxy/VPN support, SSL via Qt
 
 ---
@@ -94,6 +94,11 @@ Plugin uses **QGIS Network Settings** automatically:
 
 **Microsoft Planetary Computer** (S3 assets):
 - Automatic SAS token retrieval (no config needed)
+
+**Copernicus Data Space Ecosystem** (OAuth2 → S3):
+- Configure OAuth2 in QGIS Auth Manager (see [User Guide](docs/user-guide.md#configuring-oauth2-for-copernicus-data-space-ecosystem))
+- Plugin automatically exchanges OAuth2 token for temporary S3 credentials
+- Seamless access to Sentinel data in `eodata` bucket
 
 **Custom Catalogs**:
 - **New Connection** → **Authentication** tab

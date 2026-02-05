@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Copernicus OAuth2→S3 Authentication**: Automatic exchange of OAuth2 tokens for temporary S3 credentials
+  - Integrated with QGIS Auth Manager for secure OAuth2 storage
+  - Requests temporary credentials from Copernicus S3 Keys Manager API
+  - Configures GDAL with AWS access key, secret key, and S3 endpoint
+  - Auto-detection of Copernicus Data Space Ecosystem catalogs
+  - Proper S3 endpoint configuration (eodata.dataspace.copernicus.eu)
+  - Seamless integration: users configure OAuth2 once, S3 access works automatically
+
 ### Changed
 - Repository forked from [qgis-stac-plugin](https://github.com/stac-utils/qgis-stac-plugin) v0.6.0
 - Renamed from "QGIS STAC Plugin" to "KADAS STAC Plugin"
